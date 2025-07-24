@@ -1,8 +1,8 @@
 /* public/assets/css/style.css */
-
 body {
-    background-color: #f8f9fa;
-    overflow-x: hidden; /* Mencegah scroll horizontal saat animasi */
+    background-color: #f9fafb; /* Lighter background for better contrast */
+    overflow-x: hidden;
+    font-family: 'Poppins', sans-serif;
 }
 
 #wrapper {
@@ -11,104 +11,178 @@ body {
 }
 
 /* ============================================= */
-/* == Gaya Sidebar Hover Modern (Diperbarui) == */
+/* == 1. Sidebar Wrapper (Collapsible on Hover) == */
 /* ============================================= */
 #sidebar-wrapper {
+    width: 90px; /* Collapsed width */
+    background-color: #111827;
     min-height: 100vh;
-    width: 90px; /* Lebar saat diciutkan (hanya ikon) */
-    background-color: #1a1d21;
-    padding: 0.5rem 0;
-    transition: width 0.3s ease-in-out;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: fixed;
     top: 0;
     left: 0;
     z-index: 1030;
+    display: flex;
+    flex-direction: column;
+    border-top-right-radius: 20px;
+    border-bottom-right-radius: 20px;
 }
 
-/* Perbaikan: Gunakan #sidebar-wrapper:hover */
 #sidebar-wrapper:hover {
-    width: 260px; /* Lebar saat mengembang */
+    width: 280px; /* Expanded width */
 }
 
-#sidebar-wrapper .sidebar-heading {
-    padding: 1rem 1.5rem;
+/* ============================================= */
+/* == 2. Sidebar Heading & Brand == */
+/* ============================================= */
+.sidebar-heading {
+    padding: 1.5rem;
     font-size: 1.5rem;
     font-weight: 700;
     color: white;
-    white-space: nowrap; /* Mencegah teks turun baris */
-    overflow: hidden;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    white-space: nowrap;
 }
 
+.sidebar-brand-text {
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s 0.1s ease, visibility 0.2s 0.1s ease;
+}
+#sidebar-wrapper:hover .sidebar-brand-text {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* ============================================= */
+/* == 3. Main Menu Items == */
+/* ============================================= */
 #sidebar-wrapper .list-group {
     padding: 0 1rem;
+    list-style: none;
 }
 
 #sidebar-wrapper .list-group-item {
     background-color: transparent;
-    color: #adb5bd;
+    color: #9ca3af;
     border: none;
-    padding: 1rem;
+    padding: 0.8rem 1rem;
     margin-bottom: 0.5rem;
     border-radius: 0.5rem;
     display: flex;
     align-items: center;
     white-space: nowrap;
     overflow: hidden;
+    text-decoration: none;
     transition: all 0.2s ease-in-out;
-}
-
-#sidebar-wrapper .list-group-item .menu-text {
-    opacity: 0; /* Sembunyikan teks secara default */
-    transition: opacity 0.2s ease-in-out;
-    margin-left: 1rem;
-}
-
-/* Perbaikan: Gunakan #sidebar-wrapper:hover */
-#sidebar-wrapper:hover .list-group-item .menu-text {
-    opacity: 1; /* Tampilkan teks saat sidebar mengembang */
-}
-
-#sidebar-wrapper .list-group-item:hover {
-    background-color: #343a40;
-    color: white;
-}
-
-#sidebar-wrapper .list-group-item.active {
-    background-color: #0d6efd;
-    color: white;
-    font-weight: 600;
-    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
 }
 
 #sidebar-wrapper .list-group-item i {
     font-size: 1.25rem;
     width: 24px;
     text-align: center;
+    transition: margin 0.3s ease;
 }
-/* ============================================= */
+#sidebar-wrapper:hover .list-group-item i {
+    margin-right: 1rem;
+}
 
+#sidebar-wrapper .list-group-item .menu-text,
+#sidebar-wrapper .has-dropdown > a .dropdown-arrow {
+    opacity: 0;
+    visibility: hidden;
+    flex-grow: 1;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+#sidebar-wrapper:hover .list-group-item .menu-text,
+#sidebar-wrapper:hover .has-dropdown > a .dropdown-arrow {
+    opacity: 1;
+    visibility: visible;
+    transition-delay: 0.1s;
+}
+
+/* Hover & Active States */
+#sidebar-wrapper .list-group-item-action:hover {
+    background-color: #1f2937;
+    color: white;
+}
+
+#sidebar-wrapper .list-group-item-action.active {
+    background: linear-gradient(90deg, #3b82f6, #60a5fa);
+    color: white;
+    font-weight: 500;
+}
+
+/* ============================================= */
+/* == 4. Dropdown Menu Styling == */
+/* ============================================= */
+.has-dropdown > a .dropdown-arrow {
+    margin-left: auto;
+    transition: transform 0.3s ease, opacity 0.2s ease, visibility 0.2s ease;
+}
+
+.has-dropdown.open > a .dropdown-arrow {
+    transform: rotate(90deg);
+}
+
+ul.submenu {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s ease-in-out;
+}
+
+#sidebar-wrapper:hover .has-dropdown.open > ul.submenu {
+    max-height: 200px;
+}
+
+ul.submenu a {
+    color: #9ca3af;
+    text-decoration: none;
+    display: block;
+    padding: 0.6rem 1rem 0.6rem 3.8rem; /* Indent submenu */
+    position: relative;
+    border-radius: 0.375rem;
+    font-size: 0.9rem;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+#sidebar-wrapper:hover ul.submenu a {
+    opacity: 1;
+}
+
+ul.submenu a:hover {
+    color: white;
+}
+ul.submenu a.active {
+    color: white;
+    font-weight: 500;
+}
+
+/* ============================================= */
+/* == 5. Page Content Wrapper == */
+/* ============================================= */
 #page-content-wrapper {
     flex: 1;
     width: 100%;
-    padding-left: 90px; /* Sesuaikan dengan lebar sidebar saat diciutkan */
-    transition: padding-left 0.3s ease-in-out;
+    padding-left: 90px; /* Match collapsed sidebar width */
+    transition: padding-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Perbaikan: Gunakan #sidebar-wrapper:hover */
 #sidebar-wrapper:hover ~ #page-content-wrapper {
-    padding-left: 260px; /* Sesuaikan dengan lebar sidebar saat mengembang */
+    padding-left: 280px; /* Match expanded sidebar width */
 }
 
 .navbar {
     border-bottom: 1px solid #e7e7e7;
 }
 
-/* Hilangkan tombol toggle lama */
-#menu-toggle {
-    display: none;
-}
-
-/* Gaya baru untuk teks brand di topbar */
 .navbar-brand-gradient {
     background: -webkit-linear-gradient(45deg, #0d6efd, #00c6ff);
     -webkit-background-clip: text;

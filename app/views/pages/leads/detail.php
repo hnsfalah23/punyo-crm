@@ -112,7 +112,14 @@
   <div class="row">
     <div class="col-lg-5">
       <div class="card mb-4" data-aos="fade-up" data-aos-delay="100">
-        <div class="card-header"><i class="bi bi-info-circle-fill me-2"></i>Informasi Prospek</div>
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <span><i class="bi bi-info-circle-fill me-2"></i>Informasi Prospek</span>
+          <?php if (can('update', 'leads')): ?>
+            <a href="<?= BASE_URL; ?>/leads/edit/<?= $data['lead']->lead_id; ?>" class="btn btn-warning btn-sm text-white">
+              <i class="bi bi-pencil-fill me-1"></i> Edit
+            </a>
+          <?php endif; ?>
+        </div>
         <div class="card-body">
           <div class="detail-item">
             <i class="bi bi-person-fill"></i>
@@ -187,7 +194,17 @@
                       <?php if (can('update', 'leads') || can('delete', 'leads')): ?>
                         <div>
                           <?php if (can('update', 'leads')): ?>
-                            <button class="btn btn-sm btn-outline-warning border-0 p-1 edit-activity-btn" data-bs-toggle="modal" data-bs-target="#editActivityModal" data-id="<?= $activity->activity_id ?>" data-name="<?= htmlspecialchars($activity->name) ?>" data-type="<?= htmlspecialchars($activity->type) ?>" data-start-date="<?= date('Y-m-d', strtotime($activity->start_time)) ?>" data-start-time="<?= date('H:i', strtotime($activity->start_time)) ?>" data-end-date="<?= $activity->end_time ? date('Y-m-d', strtotime($activity->end_time)) : '' ?>" data-end-time="<?= $activity->end_time ? date('H:i', strtotime($activity->end_time)) : '' ?>" data-description="<?= htmlspecialchars($activity->description) ?>" data-photo="<?= $activity->documentation_photo ? BASE_URL . '/uploads/activities/' . $activity->documentation_photo : '' ?>">
+                            <button class="btn btn-sm btn-outline-warning border-0 p-1 edit-activity-btn"
+                              data-bs-toggle="modal" data-bs-target="#editActivityModal"
+                              data-id="<?= $activity->activity_id ?>"
+                              data-name="<?= htmlspecialchars($activity->name) ?>"
+                              data-type="<?= htmlspecialchars($activity->type) ?>"
+                              data-start-date="<?= date('Y-m-d', strtotime($activity->start_time)) ?>"
+                              data-start-time="<?= date('H:i', strtotime($activity->start_time)) ?>"
+                              data-end-date="<?= $activity->end_time ? date('Y-m-d', strtotime($activity->end_time)) : '' ?>"
+                              data-end-time="<?= $activity->end_time ? date('H:i', strtotime($activity->end_time)) : '' ?>"
+                              data-description="<?= htmlspecialchars($activity->description) ?>"
+                              data-photo="<?= $activity->documentation_photo ? BASE_URL . '/uploads/activities/' . $activity->documentation_photo : '' ?>">
                               <i class="bi bi-pencil-fill"></i>
                             </button>
                           <?php endif; ?>
@@ -251,48 +268,50 @@
   </div>
 </div>
 
-<div class="modal fade" id="addActivityModal" tabindex="-1">
+<div class="modal fade" id="editActivityModal" tabindex="-1">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">Tambah Aktivitas Baru</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <h5 class="modal-title">Edit Aktivitas</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
-      <form action="<?= BASE_URL; ?>/activities/add" method="POST" enctype="multipart/form-data">
+      <form id="editActivityForm" method="POST" enctype="multipart/form-data">
         <div class="modal-body">
-          <input type="hidden" name="related_item_id" value="<?= $data['lead']->lead_id; ?>">
-          <input type="hidden" name="related_item_type" value="lead">
           <input type="hidden" name="redirect_url" value="<?= BASE_URL; ?>/leads/detail/<?= $data['lead']->lead_id; ?>">
 
-          <div class="mb-3"><label class="form-label">Nama Aktivitas</label><input type="text" class="form-control" name="name" required></div>
-          <div class="mb-3"><label class="form-label">Jenis</label><select name="type" class="form-select" required>
+          <div class="mb-3"><label class="form-label">Nama Aktivitas</label><input type="text" id="edit_name" class="form-control" name="name" required></div>
+          <div class="mb-3"><label class="form-label">Jenis</label><select id="edit_type" name="type" class="form-select" required>
               <option value="Tugas">Tugas</option>
               <option value="Panggilan">Panggilan</option>
               <option value="Email">Email</option>
               <option value="Rapat">Rapat</option>
             </select></div>
           <div class="row">
-            <div class="col-md-6 mb-3"><label class="form-label">Tanggal Mulai</label><input type="date" class="form-control" name="start_date" value="<?= date('Y-m-d'); ?>" required></div>
-            <div class="col-md-6 mb-3"><label class="form-label">Waktu Mulai</label><input type="time" class="form-control" name="start_time" value="<?= date('H:i'); ?>" required></div>
+            <div class="col-md-6 mb-3"><label class="form-label">Tanggal Mulai</label><input type="date" id="edit_start_date" class="form-control" name="start_date" required></div>
+            <div class="col-md-6 mb-3"><label class="form-label">Waktu Mulai</label><input type="time" id="edit_start_time" class="form-control" name="start_time" required></div>
           </div>
           <div class="row">
-            <div class="col-md-6 mb-3"><label class="form-label">Tanggal Selesai</label><input type="date" class="form-control" name="end_date" value="<?= date('Y-m-d'); ?>"></div>
-            <div class="col-md-6 mb-3"><label class="form-label">Waktu Selesai</label><input type="time" class="form-control" name="end_time" value="<?= date('H:i'); ?>"></div>
+            <div class="col-md-6 mb-3"><label class="form-label">Tanggal Selesai (Opsional)</label><input type="date" id="edit_end_date" class="form-control" name="end_date"></div>
+            <div class="col-md-6 mb-3"><label class="form-label">Waktu Selesai (Opsional)</label><input type="time" id="edit_end_time" class="form-control" name="end_time"></div>
           </div>
-          <div class="mb-3"><label class="form-label">Deskripsi</label><textarea class="form-control" name="description" rows="3"></textarea></div>
-          <div class="mb-3"><label class="form-label">Foto Dokumentasi (Opsional)</label><input class="form-control" type="file" name="documentation_photo" accept="image/*"></div>
+          <div class="mb-3"><label class="form-label">Deskripsi</label><textarea id="edit_description" class="form-control" name="description" rows="3"></textarea></div>
+          <div class="mb-3">
+            <label class="form-label">Ganti Foto Dokumentasi (Opsional)</label>
+            <input class="form-control" type="file" name="documentation_photo" accept="image/*">
+            <div id="current_photo_container" class="mt-2"></div>
+          </div>
         </div>
-        <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button><button type="submit" class="btn btn-primary">Simpan</button></div>
+        <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button><button type="submit" class="btn btn-primary">Simpan Perubahan</button></div>
       </form>
     </div>
   </div>
 </div>
-
 
 <script>
   document.addEventListener('DOMContentLoaded', function() {
     // JavaScript untuk mengisi modal edit aktivitas
     document.querySelectorAll('.edit-activity-btn').forEach(button => {
       button.addEventListener('click', function() {
+        // Ambil data dari tombol yang diklik
         const id = this.dataset.id;
         const name = this.dataset.name;
         const type = this.dataset.type;
@@ -303,8 +322,9 @@
         const description = this.dataset.description;
         const photoUrl = this.dataset.photo;
 
+        // Tentukan form dan elemen di dalam modal edit
         const form = document.getElementById('editActivityForm');
-        form.action = '<?= BASE_URL ?>/activities/edit/' + id;
+        form.action = '<?= BASE_URL ?>/activities/edit/' + id; // Set action form secara dinamis
 
         document.getElementById('edit_name').value = name;
         document.getElementById('edit_type').value = type;
@@ -314,11 +334,12 @@
         document.getElementById('edit_end_time').value = endTime;
         document.getElementById('edit_description').value = description;
 
+        // Tampilkan foto yang sudah ada
         const photoContainer = document.getElementById('current_photo_container');
         if (photoUrl) {
           photoContainer.innerHTML = `<p class="mb-1 small">Foto saat ini:</p><img src="${photoUrl}" style="max-height: 100px;" class="img-fluid rounded">`;
         } else {
-          photoContainer.innerHTML = '';
+          photoContainer.innerHTML = ''; // Kosongkan jika tidak ada foto
         }
       });
     });

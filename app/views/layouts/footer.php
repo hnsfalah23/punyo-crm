@@ -67,6 +67,15 @@
     if (typePicker) {
       typePicker.addEventListener('change', updateTargetUrl);
     }
+
+    const dropdowns = document.querySelectorAll('.has-dropdown > a');
+    dropdowns.forEach(function(dropdown) {
+      dropdown.addEventListener('click', function(e) {
+        e.preventDefault();
+        const parentLi = this.parentElement;
+        parentLi.classList.toggle('open');
+      });
+    });
   });
 </script>
 </body>

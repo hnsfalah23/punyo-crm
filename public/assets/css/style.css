@@ -1,0 +1,116 @@
+/* public/assets/css/style.css */
+
+body {
+    background-color: #f8f9fa;
+    overflow-x: hidden; /* Mencegah scroll horizontal saat animasi */
+}
+
+#wrapper {
+    display: flex;
+    width: 100%;
+}
+
+/* ============================================= */
+/* == Gaya Sidebar Hover Modern (Diperbarui) == */
+/* ============================================= */
+#sidebar-wrapper {
+    min-height: 100vh;
+    width: 90px; /* Lebar saat diciutkan (hanya ikon) */
+    background-color: #1a1d21;
+    padding: 0.5rem 0;
+    transition: width 0.3s ease-in-out;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1030;
+}
+
+/* Perbaikan: Gunakan #sidebar-wrapper:hover */
+#sidebar-wrapper:hover {
+    width: 260px; /* Lebar saat mengembang */
+}
+
+#sidebar-wrapper .sidebar-heading {
+    padding: 1rem 1.5rem;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+    white-space: nowrap; /* Mencegah teks turun baris */
+    overflow: hidden;
+}
+
+#sidebar-wrapper .list-group {
+    padding: 0 1rem;
+}
+
+#sidebar-wrapper .list-group-item {
+    background-color: transparent;
+    color: #adb5bd;
+    border: none;
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+    overflow: hidden;
+    transition: all 0.2s ease-in-out;
+}
+
+#sidebar-wrapper .list-group-item .menu-text {
+    opacity: 0; /* Sembunyikan teks secara default */
+    transition: opacity 0.2s ease-in-out;
+    margin-left: 1rem;
+}
+
+/* Perbaikan: Gunakan #sidebar-wrapper:hover */
+#sidebar-wrapper:hover .list-group-item .menu-text {
+    opacity: 1; /* Tampilkan teks saat sidebar mengembang */
+}
+
+#sidebar-wrapper .list-group-item:hover {
+    background-color: #343a40;
+    color: white;
+}
+
+#sidebar-wrapper .list-group-item.active {
+    background-color: #0d6efd;
+    color: white;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
+}
+
+#sidebar-wrapper .list-group-item i {
+    font-size: 1.25rem;
+    width: 24px;
+    text-align: center;
+}
+/* ============================================= */
+
+#page-content-wrapper {
+    flex: 1;
+    width: 100%;
+    padding-left: 90px; /* Sesuaikan dengan lebar sidebar saat diciutkan */
+    transition: padding-left 0.3s ease-in-out;
+}
+
+/* Perbaikan: Gunakan #sidebar-wrapper:hover */
+#sidebar-wrapper:hover ~ #page-content-wrapper {
+    padding-left: 260px; /* Sesuaikan dengan lebar sidebar saat mengembang */
+}
+
+.navbar {
+    border-bottom: 1px solid #e7e7e7;
+}
+
+/* Hilangkan tombol toggle lama */
+#menu-toggle {
+    display: none;
+}
+
+/* Gaya baru untuk teks brand di topbar */
+.navbar-brand-gradient {
+    background: -webkit-linear-gradient(45deg, #0d6efd, #00c6ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}

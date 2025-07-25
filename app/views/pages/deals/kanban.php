@@ -186,6 +186,32 @@
     font-size: 0.85rem;
   }
 
+  /* Product List Styling */
+  .card-product-list {
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border-color);
+  }
+
+  .card-product-list ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+  }
+
+  .card-product-list li {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .card-product-list i {
+    font-size: 0.9rem;
+  }
+
+
   .card-footer-details {
     margin-top: 1rem;
     padding-top: 1rem;
@@ -250,7 +276,19 @@
                     <?= htmlspecialchars($deal->name) ?>
                   </a>
                 </h6>
-                <p class="card-company mb-0"><?= htmlspecialchars($deal->company_name) ?></p>
+                <p class="card-company mb-2"><?= htmlspecialchars($deal->company_name) ?></p>
+
+                <?php if (!empty($deal->product_names)): ?>
+                  <div class="card-product-list">
+                    <ul>
+                      <li>
+                        <i class="bi bi-box-seam"></i>
+                        <span><?= htmlspecialchars($deal->product_names); ?></span>
+                      </li>
+                    </ul>
+                  </div>
+                <?php endif; ?>
+
                 <div class="card-footer-details">
                   <div class="card-owner">
                     <i class="bi bi-person-circle"></i>

@@ -100,6 +100,7 @@
         <table class="table table-hover align-middle">
           <thead class="table-light">
             <tr>
+              <th>Nama Kesepakatan</th>
               <th>Narahubung</th>
               <th>Nama Instansi</th>
               <th>Tahapan</th>
@@ -111,12 +112,17 @@
           <tbody>
             <?php if (empty($data['deals'])): ?>
               <tr>
-                <td colspan="6" class="text-center py-5">Tidak ada data kesepakatan yang ditemukan.</td>
+                <td colspan="7" class="text-center py-5">Tidak ada data kesepakatan yang ditemukan.</td>
               </tr>
             <?php else: ?>
               <?php foreach ($data['deals'] as $deal) : ?>
                 <tr>
-                  <td><strong><?= htmlspecialchars($deal->contact_name); ?></strong></td>
+                  <td>
+                    <a href="<?= BASE_URL; ?>/deals/detail/<?= $deal->deal_id; ?>" class="fw-bold text-decoration-none">
+                      <?= htmlspecialchars($deal->name); ?>
+                    </a>
+                  </td>
+                  <td><?= htmlspecialchars($deal->contact_name); ?></td>
                   <td><?= htmlspecialchars($deal->company_name); ?></td>
                   <td>
                     <?php $stageClass = 'badge-stage-' . strtolower(str_replace(' ', '-', $deal->stage)); ?>
@@ -175,7 +181,6 @@
       form.addEventListener('submit', function(e) {
         e.preventDefault();
         const itemName = form.getAttribute('data-item-name');
-        // Pastikan library SweetAlert2 sudah dimuat
         if (typeof Swal !== 'undefined') {
           Swal.fire({
             title: 'Apakah Anda yakin?',
@@ -192,7 +197,6 @@
             }
           });
         } else {
-          // Fallback jika SweetAlert tidak ada
           if (confirm(`Apakah Anda yakin ingin menghapus "${itemName}"?`)) {
             form.submit();
           }

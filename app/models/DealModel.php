@@ -10,7 +10,6 @@ class DealModel
     $this->db = new Database;
   }
 
-  // Fungsi baru untuk mendapatkan detail error dari database
   public function getDbError()
   {
     return $this->db->getError();
@@ -163,16 +162,23 @@ class DealModel
   {
     $this->db->query('
       UPDATE deals SET 
-        name = :name, stage = :stage, value = :value, 
-        contact_id = :contact_id, expected_close_date = :expected_close_date, updated_at = NOW()
+        name = :name, 
+        stage = :stage, 
+        value = :value, 
+        contact_id = :contact_id, 
+        expected_close_date = :expected_close_date,
+        requirements_notes = :requirements_notes, -- Tambahkan kolom baru
+        updated_at = NOW()
       WHERE deal_id = :id
     ');
+
     $this->db->bind(':id', $data['id']);
     $this->db->bind(':name', $data['name']);
     $this->db->bind(':stage', $data['stage']);
     $this->db->bind(':value', $data['value']);
     $this->db->bind(':contact_id', $data['contact_id']);
     $this->db->bind(':expected_close_date', $data['expected_close_date']);
+    $this->db->bind(':requirements_notes', $data['requirements_notes']); // Bind data baru
     return $this->db->execute();
   }
 

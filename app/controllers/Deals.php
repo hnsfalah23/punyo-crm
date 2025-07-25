@@ -210,6 +210,8 @@ class Deals extends Controller
         'value' => trim($_POST['value']),
         'stage' => $_POST['stage'],
         'expected_close_date' => !empty($_POST['expected_close_date']) ? $_POST['expected_close_date'] : null,
+        // Tambahkan data catatan kebutuhan
+        'requirements_notes' => trim($_POST['requirements_notes'] ?? ''),
         'products_in_deal' => $products_in_deal,
         'contact_id_err' => ''
       ];
@@ -225,13 +227,14 @@ class Deals extends Controller
             $this->dealModel->addMultipleProductsToDeal($id, $data['products_in_deal']);
           }
           flash('deal_message', 'Kesepakatan berhasil diupdate.');
-          header('Location: ' . BASE_URL . '/deals');
+          header('Location: ' . BASE_URL . '/deals/detail/' . $id);
           exit;
         } else {
           flash('deal_message', 'Gagal mengupdate kesepakatan.', 'alert alert-danger');
         }
       }
 
+      // Jika ada error, siapkan data untuk render ulang
       $data['title'] = 'Edit Kesepakatan';
       $data['contacts'] = $this->instansiModel->getAllContactsWithCompanyName();
       $data['categories'] = $this->productModel->getAllCategories();
@@ -254,6 +257,8 @@ class Deals extends Controller
         'value' => $deal->value,
         'stage' => $deal->stage,
         'expected_close_date' => $deal->expected_close_date,
+        // Ambil data catatan kebutuhan dari database
+        'requirements_notes' => $deal->requirements_notes ?? '',
         'name_err' => '',
         'contact_id_err' => ''
       ];
@@ -334,12 +339,9 @@ class Deals extends Controller
     if ($this->dealModel->updateDealStage($dealId, $newStage)) {
       echo json_encode(['success' => true, 'message' => 'Stage berhasil diperbarui.']);
     } else {
-      // **PERUBAHAN UTAMA DI SINI**
-      // Ambil pesan error dari model untuk ditampilkan
       $db_error = $this->dealModel->getDbError();
       $response_message = 'Gagal memperbarui stage di database.';
       if ($db_error) {
-        // Kirim detail error untuk debugging (HANYA UNTUK DEVELOPMENT)
         $response_message .= ' Detail: ' . $db_error;
       }
       echo json_encode(['success' => false, 'message' => $response_message]);

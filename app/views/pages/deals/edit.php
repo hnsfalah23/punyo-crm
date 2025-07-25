@@ -51,6 +51,19 @@
                 </div>
               </div>
             </div>
+
+            <?php if ($data['stage'] == 'Analisis Kebutuhan'): ?>
+              <div class="card bg-light border-primary" data-aos="fade-up">
+                <div class="card-body">
+                  <h6 class="card-title text-primary"><i class="bi bi-list-check me-2"></i>Catatan Kebutuhan Proyek</h6>
+                  <div class="form-floating">
+                    <textarea class="form-control" placeholder="Catat kebutuhan proyek di sini" id="requirements_notes" name="requirements_notes" style="height: 150px"><?= htmlspecialchars($data['requirements_notes']); ?></textarea>
+                    <label for="requirements_notes">Tuliskan detail kebutuhan, spesifikasi, dll.</label>
+                  </div>
+                </div>
+              </div>
+            <?php endif; ?>
+
           </div>
         </div>
       </div>
@@ -136,7 +149,6 @@
 
     let productsData = [];
 
-    // Fungsi yang sama dengan halaman 'add'
     categorySelect.addEventListener('change', function() {
       const categoryId = this.value;
       productSelect.innerHTML = '<option value="">Memuat...</option>';
@@ -163,15 +175,10 @@
       const quantity = parseInt(document.getElementById('product-quantity').value);
 
       if (!productId || !quantity || quantity < 1) {
-        alert('Silakan pilih produk dan masukkan jumlah yang valid.');
         return;
       }
-
       const product = productsData.find(p => p.product_id == productId);
-      if (!product) return;
-
-      if (cartItems.querySelector(`tr[data-product-id="${product.product_id}"]`)) {
-        alert('Produk ini sudah ada di keranjang.');
+      if (!product || cartItems.querySelector(`tr[data-product-id="${product.product_id}"]`)) {
         return;
       }
 
@@ -187,13 +194,9 @@
                     <input type="hidden" name="products[${product.product_id}][id]" value="${product.product_id}">
                     <input type="hidden" name="products[${product.product_id}][price]" value="${product.price}">
                 </td>
-                <td style="width: 25%;">
-                    <input type="number" class="form-control form-control-sm quantity-input" name="products[${product.product_id}][quantity]" value="${quantity}" min="1">
-                </td>
+                <td style="width: 25%;"><input type="number" class="form-control form-control-sm quantity-input" name="products[${product.product_id}][quantity]" value="${quantity}" min="1"></td>
                 <td class="align-middle subtotal">Rp ${new Intl.NumberFormat('id-ID').format(subtotal)}</td>
-                <td class="align-middle text-center">
-                    <button type="button" class="btn btn-sm btn-outline-danger border-0 remove-item-btn"><i class="bi bi-x-lg"></i></button>
-                </td>
+                <td class="align-middle text-center"><button type="button" class="btn btn-sm btn-outline-danger border-0 remove-item-btn"><i class="bi bi-x-lg"></i></button></td>
             </tr>
         `;
       cartItems.insertAdjacentHTML('beforeend', newRowHTML);
@@ -213,7 +216,6 @@
     cartItems.addEventListener('input', function(e) {
       if (e.target.classList.contains('quantity-input')) {
         const row = e.target.closest('tr');
-        // Cek jika input harga ada sebelum mengakses value
         const priceInput = row.querySelector('input[name*="[price]"]');
         if (priceInput) {
           const price = parseFloat(priceInput.value);
@@ -240,7 +242,6 @@
       dealValueInput.value = total;
     }
 
-    // PENTING: Panggil fungsi ini saat halaman dimuat untuk menghitung total awal
     updateGrandTotal();
   });
 </script>

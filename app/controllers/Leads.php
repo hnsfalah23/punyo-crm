@@ -247,7 +247,8 @@ class Leads extends Controller
 
         if ($newContactId) {
           $dealData = [
-            'name' => trim($_POST['contact_name'] ?? ''), // Perbaikan: Langsung menggunakan nama kontak
+            // **PERBAIKAN UTAMA DI SINI:** Mengambil dari input 'deal_name'
+            'name' => trim($_POST['deal_name'] ?? ''),
             'value' => trim($_POST['deal_value'] ?? 0),
             'owner_id' => $_SESSION['user_id'],
             'company_id' => $newCompanyId,

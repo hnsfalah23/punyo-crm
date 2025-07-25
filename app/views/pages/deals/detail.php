@@ -74,10 +74,16 @@
   <?php flash('activity_message'); ?>
 
   <div class="row">
-    <!-- Kolom Kiri: Info Utama & Produk -->
     <div class="col-lg-5">
       <div class="card mb-4" data-aos="fade-up" data-aos-delay="100">
-        <div class="card-header"><i class="bi bi-info-circle-fill me-2"></i>Informasi Utama</div>
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <span><i class="bi bi-info-circle-fill me-2"></i>Informasi Utama</span>
+          <?php if (can('update', 'deals')): ?>
+            <a href="<?= BASE_URL; ?>/deals/edit/<?= $data['deal']->deal_id; ?>" class="btn btn-warning btn-sm text-white">
+              <i class="bi bi-pencil-fill me-1"></i> Edit
+            </a>
+          <?php endif; ?>
+        </div>
         <div class="card-body">
           <div class="detail-item">
             <i class="bi bi-building"></i>
@@ -118,18 +124,21 @@
         <div class="card-header"><i class="bi bi-box-seam-fill me-2"></i>Produk Terkait</div>
         <div class="card-body">
           <ul class="list-group list-group-flush">
-            <?php foreach ($data['products'] as $product): ?>
-              <li class="list-group-item d-flex justify-content-between">
-                <span><?= htmlspecialchars($product->name); ?> (<?= $product->quantity; ?>x)</span>
-                <span>Rp <?= number_format($product->price_per_unit * $product->quantity, 0, ',', '.'); ?></span>
-              </li>
-            <?php endforeach; ?>
+            <?php if (empty($data['products'])): ?>
+              <li class="list-group-item text-center text-muted">Belum ada produk.</li>
+            <?php else: ?>
+              <?php foreach ($data['products'] as $product): ?>
+                <li class="list-group-item d-flex justify-content-between">
+                  <span><?= htmlspecialchars($product->name); ?> (<?= $product->quantity; ?>x)</span>
+                  <span>Rp <?= number_format($product->price_per_unit * $product->quantity, 0, ',', '.'); ?></span>
+                </li>
+              <?php endforeach; ?>
+            <?php endif; ?>
           </ul>
         </div>
       </div>
     </div>
 
-    <!-- Kolom Kanan: Aktivitas -->
     <div class="col-lg-7">
       <div class="card mb-4" data-aos="fade-up" data-aos-delay="300">
         <div class="card-header d-flex justify-content-between align-items-center">
@@ -183,73 +192,6 @@
 </div>
 
 
-<!-- Modal Tambah Aktivitas -->
-<div class="modal fade" id="addActivityModal" tabindex="-1" aria-labelledby="addActivityModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="addActivityModalLabel">Tambah Aktivitas Baru</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <!-- Diperbarui: Tambahkan enctype untuk upload file -->
-      <form action="<?= BASE_URL; ?>/activities/add" method="POST" enctype="multipart/form-data">
-        <div class="modal-body">
-          <input type="hidden" name="related_item_id" value="<?= $data['deal']->deal_id; ?>">
-          <input type="hidden" name="related_item_type" value="deal">
-          <input type="hidden" name="redirect_url" value="<?= BASE_URL; ?>/deals/detail/<?= $data['deal']->deal_id; ?>">
-
-          <div class="mb-3">
-            <label for="name" class="form-label">Nama Aktivitas</label>
-            <input type="text" class="form-control" name="name" required>
-          </div>
-          <div class="mb-3">
-            <label for="type" class="form-label">Jenis</label>
-            <select name="type" class="form-select" required>
-              <option value="Tugas">Tugas</option>
-              <option value="Panggilan">Panggilan</option>
-              <option value="Email">Email</option>
-              <option value="Rapat">Rapat</option>
-            </select>
-          </div>
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label for="start_date" class="form-label">Tanggal Mulai</label>
-              <input type="date" class="form-control" name="start_date" value="<?= date('Y-m-d'); ?>" required>
-            </div>
-            <div class="col-md-6 mb-3">
-              <label for="start_time" class="form-label">Waktu Mulai</label>
-              <input type="time" class="form-control" name="start_time" value="<?= date('H:i'); ?>" required>
-            </div>
-          </div>
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label for="end_date" class="form-label">Tanggal Selesai (Opsional)</label>
-              <input type="date" class="form-control" name="end_date">
-            </div>
-            <div class="col-md-6 mb-3">
-              <label for="end_time" class="form-label">Waktu Selesai (Opsional)</label>
-              <input type="time" class="form-control" name="end_time">
-            </div>
-          </div>
-          <div class="mb-3">
-            <label for="description" class="form-label">Deskripsi</label>
-            <textarea class="form-control" name="description" rows="3"></textarea>
-          </div>
-          <!-- Diperbarui: Tambahkan input file untuk foto -->
-          <div class="mb-3">
-            <label for="documentation_photo" class="form-label">Foto Dokumentasi (Opsional)</label>
-            <input class="form-control" type="file" name="documentation_photo" accept="image/*">
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-          <button type="submit" class="btn btn-primary">Simpan Aktivitas</button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
-<!-- Modal Edit Aktivitas -->
 <div class="modal fade" id="addActivityModal" tabindex="-1">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -261,7 +203,6 @@
           <input type="hidden" name="related_item_id" value="<?= $data['deal']->deal_id; ?>">
           <input type="hidden" name="related_item_type" value="deal">
           <input type="hidden" name="redirect_url" value="<?= BASE_URL; ?>/deals/detail/<?= $data['deal']->deal_id; ?>">
-
           <div class="mb-3"><label class="form-label">Nama Aktivitas</label><input type="text" class="form-control" name="name" required></div>
           <div class="mb-3"><label class="form-label">Jenis</label><select name="type" class="form-select" required>
               <option value="Tugas">Tugas</option>
@@ -274,24 +215,58 @@
             <div class="col-md-6 mb-3"><label class="form-label">Waktu Mulai</label><input type="time" class="form-control" name="start_time" value="<?= date('H:i'); ?>" required></div>
           </div>
           <div class="row">
-            <div class="col-md-6 mb-3"><label class="form-label">Tanggal Selesai</label><input type="date" class="form-control" name="end_date" value="<?= date('Y-m-d'); ?>"></div>
-            <div class="col-md-6 mb-3"><label class="form-label">Waktu Selesai</label><input type="time" class="form-control" name="end_time" value="<?= date('H:i'); ?>"></div>
+            <div class="col-md-6 mb-3"><label class="form-label">Tanggal Selesai (Opsional)</label><input type="date" class="form-control" name="end_date"></div>
+            <div class="col-md-6 mb-3"><label class="form-label">Waktu Selesai (Opsional)</label><input type="time" class="form-control" name="end_time"></div>
           </div>
           <div class="mb-3"><label class="form-label">Deskripsi</label><textarea class="form-control" name="description" rows="3"></textarea></div>
           <div class="mb-3"><label class="form-label">Foto Dokumentasi (Opsional)</label><input class="form-control" type="file" name="documentation_photo" accept="image/*"></div>
         </div>
-        <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button><button type="submit" class="btn btn-primary">Simpan</button></div>
+        <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button><button type="submit" class="btn btn-primary">Simpan Aktivitas</button></div>
       </form>
     </div>
   </div>
 </div>
 
-
+<div class="modal fade" id="editActivityModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Edit Aktivitas</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="editActivityForm" method="POST" enctype="multipart/form-data">
+        <div class="modal-body">
+          <input type="hidden" name="redirect_url" value="<?= BASE_URL; ?>/deals/detail/<?= $data['deal']->deal_id; ?>">
+          <div class="mb-3"><label class="form-label">Nama Aktivitas</label><input type="text" id="edit_name" class="form-control" name="name" required></div>
+          <div class="mb-3"><label class="form-label">Jenis</label><select id="edit_type" name="type" class="form-select" required>
+              <option value="Tugas">Tugas</option>
+              <option value="Panggilan">Panggilan</option>
+              <option value="Email">Email</option>
+              <option value="Rapat">Rapat</option>
+            </select></div>
+          <div class="row">
+            <div class="col-md-6 mb-3"><label class="form-label">Tanggal Mulai</label><input type="date" id="edit_start_date" class="form-control" name="start_date" required></div>
+            <div class="col-md-6 mb-3"><label class="form-label">Waktu Mulai</label><input type="time" id="edit_start_time" class="form-control" name="start_time" required></div>
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3"><label class="form-label">Tanggal Selesai (Opsional)</label><input type="date" id="edit_end_date" class="form-control" name="end_date"></div>
+            <div class="col-md-6 mb-3"><label class="form-label">Waktu Selesai (Opsional)</label><input type="time" id="edit_end_time" class="form-control" name="end_time"></div>
+          </div>
+          <div class="mb-3"><label class="form-label">Deskripsi</label><textarea id="edit_description" class="form-control" name="description" rows="3"></textarea></div>
+          <div class="mb-3"><label class="form-label">Ganti Foto Dokumentasi (Opsional)</label><input class="form-control" type="file" name="documentation_photo" accept="image/*">
+            <div id="current_photo_container" class="mt-2"></div>
+          </div>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button><button type="submit" class="btn btn-primary">Simpan Perubahan</button></div>
+      </form>
+    </div>
+  </div>
+</div>
 
 <script>
   document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.edit-activity-btn').forEach(button => {
       button.addEventListener('click', function() {
+        // Ambil data dari tombol
         const id = this.dataset.id;
         const name = this.dataset.name;
         const type = this.dataset.type;
@@ -302,6 +277,7 @@
         const description = this.dataset.description;
         const photoUrl = this.dataset.photo;
 
+        // Tentukan form dan elemen modal edit
         const form = document.getElementById('editActivityForm');
         form.action = '<?= BASE_URL ?>/activities/edit/' + id;
 
@@ -313,6 +289,7 @@
         document.getElementById('edit_end_time').value = endTime;
         document.getElementById('edit_description').value = description;
 
+        // Tampilkan foto yang sudah ada
         const photoContainer = document.getElementById('current_photo_container');
         if (photoUrl) {
           photoContainer.innerHTML = `<p class="mb-1 small">Foto saat ini:</p><img src="${photoUrl}" style="max-height: 100px;" class="img-fluid rounded">`;

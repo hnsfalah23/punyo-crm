@@ -10,39 +10,56 @@ class LeadModel
     $this->db = new Database;
   }
 
-  public function getLeads($params = [])
+  /**
+   * Fungsi bantuan privat untuk membangun klausa WHERE secara dinamis
+   */
+  private function buildWhereClause($params, &$bindings)
   {
-    $sql = '
-            SELECT l.*, u.name as owner_name 
-            FROM leads as l
-            JOIN users as u ON l.owner_id = u.user_id
-            WHERE 1=1
-        ';
-
+    $sql = '';
     if (!empty($params['status'])) {
       $sql .= ' AND l.status = :status';
+      $bindings[':status'] = $params['status'];
     }
     if (!empty($params['search'])) {
       $sql .= ' AND (l.name LIKE :search OR l.company_name LIKE :search)';
+      $bindings[':search'] = '%' . $params['search'] . '%';
     }
-    if (!empty($params['scope_ids'])) {
-      $placeholders = implode(',', array_map('intval', $params['scope_ids']));
-      $sql .= " AND l.owner_id IN ($placeholders)";
+    // Logika filter berdasarkan peran pengguna (FIX UTAMA DI SINI)
+    if (isset($params['scope_type'])) {
+      if ($params['scope_type'] == 'division') {
+        $sql .= ' AND u.division_id = :division_id';
+        $bindings[':division_id'] = $params['scope_value'];
+      } elseif ($params['scope_type'] == 'self') {
+        $sql .= ' AND l.owner_id = :owner_id';
+        $bindings[':owner_id'] = $params['scope_value'];
+      }
     }
+    return $sql;
+  }
 
-    $sql .= ' ORDER BY l.created_at DESC';
+  public function getLeads($params = [])
+  {
+    $bindings = [];
+    $whereClause = $this->buildWhereClause($params, $bindings);
+
+    $sql = "
+        SELECT l.*, u.name as owner_name 
+        FROM leads as l
+        JOIN users as u ON l.owner_id = u.user_id
+        WHERE 1=1 {$whereClause}
+        ORDER BY l.created_at DESC
+    ";
 
     if (isset($params['limit']) && isset($params['offset'])) {
       $sql .= ' LIMIT :limit OFFSET :offset';
+      $bindings[':limit'] = (int) $params['limit'];
+      $bindings[':offset'] = (int) $params['offset'];
     }
 
     $this->db->query($sql);
-
-    if (!empty($params['status'])) $this->db->bind(':status', $params['status']);
-    if (!empty($params['search'])) $this->db->bind(':search', '%' . $params['search'] . '%');
-    if (isset($params['limit'])) {
-      $this->db->bind(':limit', $params['limit'], PDO::PARAM_INT);
-      $this->db->bind(':offset', $params['offset'], PDO::PARAM_INT);
+    foreach ($bindings as $key => &$val) {
+      $type = is_int($val) ? PDO::PARAM_INT : PDO::PARAM_STR;
+      $this->db->bind($key, $val, $type);
     }
 
     return $this->db->resultSet();
@@ -50,23 +67,20 @@ class LeadModel
 
   public function getTotalLeads($params = [])
   {
-    $sql = 'SELECT COUNT(l.lead_id) as total FROM leads as l JOIN users as u ON l.owner_id = u.user_id WHERE 1=1';
+    $bindings = [];
+    $whereClause = $this->buildWhereClause($params, $bindings);
 
-    if (!empty($params['status'])) {
-      $sql .= ' AND l.status = :status';
-    }
-    if (!empty($params['search'])) {
-      $sql .= ' AND (l.name LIKE :search OR l.company_name LIKE :search)';
-    }
-    if (!empty($params['scope_ids'])) {
-      $placeholders = implode(',', array_map('intval', $params['scope_ids']));
-      $sql .= " AND l.owner_id IN ($placeholders)";
-    }
+    $sql = "
+        SELECT COUNT(l.lead_id) as total 
+        FROM leads as l 
+        JOIN users as u ON l.owner_id = u.user_id 
+        WHERE 1=1 {$whereClause}
+    ";
 
     $this->db->query($sql);
-
-    if (!empty($params['status'])) $this->db->bind(':status', $params['status']);
-    if (!empty($params['search'])) $this->db->bind(':search', '%' . $params['search'] . '%');
+    foreach ($bindings as $key => &$val) {
+      $this->db->bind($key, $val);
+    }
 
     $result = $this->db->single();
     return $result ? $result->total : 0;

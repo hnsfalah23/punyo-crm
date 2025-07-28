@@ -1,0 +1,49 @@
+<style>
+  th {
+    background-color: #0d6efd;
+    color: #ffffff;
+    font-weight: bold;
+  }
+
+  .sub-header {
+    background-color: #f2f2f2;
+    font-weight: bold;
+  }
+
+  .total-footer td {
+    background-color: #cce5ff;
+    font-weight: bold;
+  }
+</style>
+<table border="1" cellpadding="5" style="border-color: #cccccc;">
+  <thead>
+    <tr>
+      <th width="7%" align="center">NO</th>
+      <th width="33%">BARANG</th>
+      <th width="20%" align="right">HARGA</th>
+      <th width="10%" align="center">JUMLAH</th>
+      <th width="10%" align="center">SATUAN</th>
+      <th width="20%" align="right">TOTAL</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{barang_items}}
+    {{jasa_items}}
+    <tr class="total-footer">
+      <td colspan="5" align="right">Subtotal</td>
+      <td align="right">{{subtotal}}</td>
+    </tr>
+    <tr class="total-footer">
+      <td colspan="5" align="right">PPN ({{ppn_percent}}%)</td>
+      <td align="right">{{ppn_value}}</td>
+    </tr>
+    <tr class="total-footer">
+      <td colspan="5" align="right">PPH 22 ({{pph_percent}}%)</td>
+      <td align="right">{{pph_value}}</td>
+    </tr>
+    <tr class="total-footer">
+      <td colspan="5" align="right"><b>Grandtotal</b></td>
+      <td align="right"><b>{{grandtotal}}</b></td>
+    </tr>
+  </tbody>
+</table>

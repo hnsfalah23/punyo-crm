@@ -10,6 +10,16 @@
     font-weight: bold;
   }
 
+  .sub-header-warning {
+    background-color: #fff3cd;
+    font-weight: bold;
+  }
+
+  .sub-header-danger {
+    background-color: #f8d7da;
+    font-weight: bold;
+  }
+
   .total-footer td {
     background-color: #cce5ff;
     font-weight: bold;
@@ -19,7 +29,7 @@
   <thead>
     <tr>
       <th width="7%" align="center">NO</th>
-      <th width="33%">BARANG</th>
+      <th width="33%">DESKRIPSI</th>
       <th width="20%" align="right">HARGA</th>
       <th width="10%" align="center">JUMLAH</th>
       <th width="10%" align="center">SATUAN</th>
@@ -29,6 +39,8 @@
   <tbody>
     {{barang_items}}
     {{jasa_items}}
+    {{negosiasi_items}}
+    {{diskon_items}}
     <tr class="total-footer">
       <td colspan="5" align="right">Subtotal</td>
       <td align="right">{{subtotal}}</td>

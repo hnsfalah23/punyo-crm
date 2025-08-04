@@ -66,7 +66,7 @@
     <h1 class="mt-4"><?= htmlspecialchars($data['deal']->name); ?></h1>
     <ol class="breadcrumb mb-4">
       <li class="breadcrumb-item"><a href="<?= BASE_URL; ?>/dashboard">Dashboard</a></li>
-      <li class="breadcrumb-item"><a href="<?= BASE_URL; ?>/deals">Kesepakatan</a></li>
+      <li class="breadcrumb-item"><a href="<?= BASE_URL; ?>/deals">Peluang</a></li>
       <li class="breadcrumb-item active">Detail</li>
     </ol>
   </div>
@@ -110,7 +110,7 @@
           </div>
           <div class="detail-item">
             <i class="bi bi-cash-coin"></i>
-            <span class="detail-label">Nilai Kesepakatan</span>
+            <span class="detail-label">Nilai Peluang</span>
             <span class="detail-value">Rp <?= number_format($data['deal']->value, 0, ',', '.'); ?></span>
           </div>
           <div class="detail-item">
@@ -211,12 +211,12 @@
               <option value="Rapat">Rapat</option>
             </select></div>
           <div class="row">
-            <div class="col-md-6 mb-3"><label class="form-label">Tanggal Mulai</label><input type="date" class="form-control" name="start_date" value="<?= date('Y-m-d'); ?>" required></div>
-            <div class="col-md-6 mb-3"><label class="form-label">Waktu Mulai</label><input type="time" class="form-control" name="start_time" value="<?= date('H:i'); ?>" required></div>
+            <div class="col-md-6 mb-3"><label class="form-label">Tanggal Mulai</label><input type="date" class="form-control" name="start_date" onclick="this.showPicker()" value="<?= date('Y-m-d'); ?>" required></div>
+            <div class="col-md-6 mb-3"><label class="form-label">Waktu Mulai</label><input type="time" class="form-control" name="start_time" onclick="this.showPicker()" value="<?= date('H:i'); ?>" required></div>
           </div>
           <div class="row">
-            <div class="col-md-6 mb-3"><label class="form-label">Tanggal Selesai (Opsional)</label><input type="date" class="form-control" name="end_date"></div>
-            <div class="col-md-6 mb-3"><label class="form-label">Waktu Selesai (Opsional)</label><input type="time" class="form-control" name="end_time"></div>
+            <div class="col-md-6 mb-3"><label class="form-label">Tanggal Selesai (Opsional)</label><input type="date" class="form-control" name="end_date" onclick="this.showPicker()"></div>
+            <div class="col-md-6 mb-3"><label class="form-label">Waktu Selesai (Opsional)</label><input type="time" class="form-control" name="end_time" onclick="this.showPicker()"></div>
           </div>
           <div class="mb-3"><label class="form-label">Deskripsi</label><textarea class="form-control" name="description" rows="3"></textarea></div>
           <div class="mb-3"><label class="form-label">Foto Dokumentasi (Opsional)</label><input class="form-control" type="file" name="documentation_photo" accept="image/*"></div>
@@ -244,12 +244,12 @@
               <option value="Rapat">Rapat</option>
             </select></div>
           <div class="row">
-            <div class="col-md-6 mb-3"><label class="form-label">Tanggal Mulai</label><input type="date" id="edit_start_date" class="form-control" name="start_date" required></div>
-            <div class="col-md-6 mb-3"><label class="form-label">Waktu Mulai</label><input type="time" id="edit_start_time" class="form-control" name="start_time" required></div>
+            <div class="col-md-6 mb-3"><label class="form-label">Tanggal Mulai</label><input type="date" id="edit_start_date" class="form-control" name="start_date" onclick="this.showPicker()" required></div>
+            <div class="col-md-6 mb-3"><label class="form-label">Waktu Mulai</label><input type="time" id="edit_start_time" class="form-control" name="start_time" onclick="this.showPicker()" required></div>
           </div>
           <div class="row">
-            <div class="col-md-6 mb-3"><label class="form-label">Tanggal Selesai (Opsional)</label><input type="date" id="edit_end_date" class="form-control" name="end_date"></div>
-            <div class="col-md-6 mb-3"><label class="form-label">Waktu Selesai (Opsional)</label><input type="time" id="edit_end_time" class="form-control" name="end_time"></div>
+            <div class="col-md-6 mb-3"><label class="form-label">Tanggal Selesai (Opsional)</label><input type="date" id="edit_end_date" class="form-control" name="end_date" onclick="this.showPicker()"></div>
+            <div class="col-md-6 mb-3"><label class="form-label">Waktu Selesai (Opsional)</label><input type="time" id="edit_end_time" class="form-control" name="end_time" onclick="this.showPicker()"></div>
           </div>
           <div class="mb-3"><label class="form-label">Deskripsi</label><textarea id="edit_description" class="form-control" name="description" rows="3"></textarea></div>
           <div class="mb-3"><label class="form-label">Ganti Foto Dokumentasi (Opsional)</label><input class="form-control" type="file" name="documentation_photo" accept="image/*">
@@ -266,7 +266,6 @@
   document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.edit-activity-btn').forEach(button => {
       button.addEventListener('click', function() {
-        // Ambil data dari tombol
         const id = this.dataset.id;
         const name = this.dataset.name;
         const type = this.dataset.type;
@@ -277,7 +276,6 @@
         const description = this.dataset.description;
         const photoUrl = this.dataset.photo;
 
-        // Tentukan form dan elemen modal edit
         const form = document.getElementById('editActivityForm');
         form.action = '<?= BASE_URL ?>/activities/edit/' + id;
 
@@ -289,7 +287,6 @@
         document.getElementById('edit_end_time').value = endTime;
         document.getElementById('edit_description').value = description;
 
-        // Tampilkan foto yang sudah ada
         const photoContainer = document.getElementById('current_photo_container');
         if (photoUrl) {
           photoContainer.innerHTML = `<p class="mb-1 small">Foto saat ini:</p><img src="${photoUrl}" style="max-height: 100px;" class="img-fluid rounded">`;

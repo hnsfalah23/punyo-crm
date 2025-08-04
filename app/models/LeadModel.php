@@ -43,7 +43,7 @@ class LeadModel
     $whereClause = $this->buildWhereClause($params, $bindings);
 
     $sql = "
-        SELECT l.*, u.name as owner_name 
+        SELECT l.*, u.name as owner_name, u.profile_picture as owner_photo
         FROM leads as l
         JOIN users as u ON l.owner_id = u.user_id
         WHERE 1=1 {$whereClause}

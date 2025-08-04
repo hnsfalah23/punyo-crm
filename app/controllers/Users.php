@@ -195,6 +195,64 @@ class Users extends Controller
     }
   }
 
+  public function profile()
+  {
+    $userId = $_SESSION['user_id'];
+
+    if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+      $currentUser = $this->userModel->getUserById($userId);
+      $data = [
+        'id' => $userId,
+        'name' => trim($_POST['name']),
+        'email' => trim($_POST['email']),
+        'phone' => trim($_POST['phone']),
+        'password' => $_POST['password'],
+        'confirm_password' => $_POST['confirm_password'],
+        'current_photo' => $currentUser->profile_picture ?? 'default.png'
+      ];
+
+      if ($data['password'] !== $data['confirm_password']) {
+        flash('profile_message', 'Konfirmasi password tidak cocok.', 'alert alert-danger');
+        header('Location: ' . BASE_URL . '/users/profile');
+        exit;
+      }
+
+      if (isset($_FILES['profile_picture']) && $_FILES['profile_picture']['error'] == 0) {
+        $targetDir = "uploads/profiles/";
+        if (!file_exists($targetDir)) {
+          mkdir($targetDir, 0777, true);
+        }
+        $fileName = uniqid() . '_' . basename($_FILES["profile_picture"]["name"]);
+        $targetFile = $targetDir . $fileName;
+
+        if (move_uploaded_file($_FILES["profile_picture"]["tmp_name"], $targetFile)) {
+          if ($data['current_photo'] != 'default.png' && file_exists($targetDir . $data['current_photo'])) {
+            unlink($targetDir . $data['current_photo']);
+          }
+          $data['profile_picture'] = $fileName;
+        }
+      } else {
+        $data['profile_picture'] = $data['current_photo'];
+      }
+
+      if ($this->userModel->updateProfile($data)) {
+        $_SESSION['user_name'] = $data['name'];
+        $_SESSION['user_photo'] = $data['profile_picture']; // Update session foto
+        flash('profile_message', 'Profil berhasil diperbarui.');
+        header('Location: ' . BASE_URL . '/users/profile');
+        exit;
+      } else {
+        flash('profile_message', 'Gagal memperbarui profil.', 'alert alert-danger');
+      }
+    }
+
+    $data = [
+      'title' => 'Edit Profil',
+      'user' => $this->userModel->getUserById($userId)
+    ];
+    $this->renderView('pages/users/profile', $data);
+  }
+
   private function renderView($view, $data = [])
   {
     $this->view('layouts/header', $data);

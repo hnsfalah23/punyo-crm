@@ -33,6 +33,7 @@ class PermissionModel
 
     if (!empty($permissions)) {
       foreach ($permissions as $menu_id => $perms) {
+        // **PERBAIKAN LOGIKA DI SINI**
         // Pastikan can_read selalu 1 jika ada izin lain yang dicentang
         $can_read = (isset($perms['create']) || isset($perms['update']) || isset($perms['delete']) || isset($perms['read'])) ? 1 : 0;
 

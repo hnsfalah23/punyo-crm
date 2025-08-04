@@ -1,8 +1,7 @@
 /* public/assets/css/style.css */
 body {
-    background-color: #f9fafb; /* Lighter background for better contrast */
+    background-color: #f8f9fa;
     overflow-x: hidden;
-    font-family: 'Poppins', sans-serif;
 }
 
 #wrapper {
@@ -14,9 +13,9 @@ body {
 /* == 1. Sidebar Wrapper (Collapsible on Hover) == */
 /* ============================================= */
 #sidebar-wrapper {
-    width: 90px; /* Collapsed width */
+    width: 90px; /* Lebar saat diciutkan */
     background-color: #111827;
-    min-height: 100vh;
+    height: 100vh; /* Tinggi penuh layar */
     transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: fixed;
     top: 0;
@@ -24,12 +23,12 @@ body {
     z-index: 1030;
     display: flex;
     flex-direction: column;
-    border-top-right-radius: 20px;
-    border-bottom-right-radius: 20px;
+    /* border-top-right-radius: 20px;
+    border-bottom-right-radius: 20px; */
 }
 
 #sidebar-wrapper:hover {
-    width: 280px; /* Expanded width */
+    width: 280px; /* Lebar saat diperluas */
 }
 
 /* ============================================= */
@@ -44,6 +43,7 @@ body {
     align-items: center;
     gap: 0.75rem;
     white-space: nowrap;
+    flex-shrink: 0; /* Mencegah heading menyusut */
 }
 
 .sidebar-brand-text {
@@ -57,11 +57,26 @@ body {
 }
 
 /* ============================================= */
-/* == 3. Main Menu Items == */
+/* == 3. Main Menu Items (dengan scroll) == */
 /* ============================================= */
 #sidebar-wrapper .list-group {
     padding: 0 1rem;
     list-style: none;
+    overflow-y: auto; /* Tambahkan scroll vertikal jika perlu */
+    flex-grow: 1; /* Ambil sisa tinggi yang tersedia */
+    min-height: 0; /* Fix penting untuk scrolling di dalam flexbox */
+}
+
+/* Kustomisasi scrollbar modern */
+#sidebar-wrapper .list-group::-webkit-scrollbar {
+    width: 6px;
+}
+#sidebar-wrapper .list-group::-webkit-scrollbar-track {
+    background: transparent;
+}
+#sidebar-wrapper .list-group::-webkit-scrollbar-thumb {
+    background: #4b5563;
+    border-radius: 3px;
 }
 
 #sidebar-wrapper .list-group-item {
@@ -169,7 +184,6 @@ ul.submenu a.active {
 /* == 5. Page Content Wrapper == */
 /* ============================================= */
 #page-content-wrapper {
-    flex: 1;
     width: 100%;
     padding-left: 90px; /* Match collapsed sidebar width */
     transition: padding-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -187,4 +201,11 @@ ul.submenu a.active {
     background: -webkit-linear-gradient(45deg, #0d6efd, #00c6ff);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+}
+
+/* Efek hover untuk item sidebar */
+#sidebar-wrapper .list-group-item-action:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: white;
+    transform: translateX(5px);
 }

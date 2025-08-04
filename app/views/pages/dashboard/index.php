@@ -120,7 +120,7 @@
   <div class="row">
     <div class="col-xl-6" data-aos="fade-up" data-aos-delay="500">
       <div class="card mb-4">
-        <div class="card-header"><i class="bi bi-funnel-fill me-1"></i>Corong Penjualan</div>
+        <div class="card-header"><i class="bi bi-funnel-fill me-1"></i>Filter Penjualan</div>
         <div class="card-body"><canvas id="salesFunnelChart"></canvas></div>
       </div>
     </div>

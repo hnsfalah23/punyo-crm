@@ -1,31 +1,31 @@
 <style>
   :root {
     --kanban-bg: #f4f7fc;
-    /* Light Gray-Blue background */
     --column-bg: #ffffff;
-    /* White column background */
     --card-bg: #ffffff;
     --card-hover-bg: #f9fafb;
     --text-primary: #1f2937;
-    /* Dark text for readability */
     --text-secondary: #6b7280;
     --border-color: #e5e7eb;
     --font-family: 'Poppins', sans-serif;
     --transition-fast: all 0.2s ease-in-out;
   }
 
-  /* Main Kanban Container */
-  .kanban-container-wrapper {
-    display: flex;
-    flex-direction: column;
-    height: calc(100vh - 57px);
-    /* Full viewport height minus topbar */
-    padding: 1.5rem;
-    font-family: var(--font-family);
+  body {
     background-color: var(--kanban-bg);
   }
 
-  /* Kanban Header */
+  /* PERBAIKAN UTAMA DI SINI: Menghapus batasan tinggi */
+  .kanban-container-wrapper {
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem;
+    font-family: var(--font-family);
+    background-color: var(--kanban-bg);
+    min-height: calc(100vh - 57px);
+    /* Memastikan container setidaknya setinggi layar */
+  }
+
   .kanban-header {
     display: flex;
     justify-content: space-between;
@@ -52,17 +52,13 @@
     background-color: #f3f4f6;
   }
 
-  /* Kanban Board - Grid Layout (No Horizontal Scroll) */
+  /* PERBAIKAN UTAMA DI SINI: Menghapus batasan tinggi */
   .kanban-board {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    /* 5 columns */
     gap: 1.5rem;
-    height: 100%;
-    overflow: hidden;
   }
 
-  /* Column Styling */
   .kanban-column {
     display: flex;
     flex-direction: column;
@@ -104,7 +100,6 @@
     font-weight: 500;
   }
 
-  /* Column Accent Colors */
   .stage-analisis-kebutuhan .kanban-column-header::before {
     background-color: #3b82f6;
   }
@@ -125,33 +120,19 @@
     background-color: #ef4444;
   }
 
-  /* Cards Container */
+  /* PERBAIKAN UTAMA DI SINI: Menghapus overflow agar tidak ada scroll di dalam kolom */
   .kanban-cards {
     flex-grow: 1;
     padding: 1rem;
-    overflow-y: auto;
     background-color: #f9fafb;
+    min-height: 150px;
+    /* Jaga agar kolom tidak collapse saat kosong */
   }
 
   .kanban-cards.drag-over {
     background-color: #f0f3f8;
   }
 
-  .kanban-cards::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  .kanban-cards::-webkit-scrollbar-track {
-    background: #e5e7eb;
-  }
-
-  .kanban-cards::-webkit-scrollbar-thumb {
-    background: #d1d5db;
-    border-radius: 3px;
-  }
-
-
-  /* Card Styling */
   .kanban-card {
     background-color: var(--card-bg);
     border-radius: 8px;
@@ -161,6 +142,7 @@
     transition: var(--transition-fast);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.06);
     border: 1px solid var(--border-color);
+    position: relative;
   }
 
   .kanban-card:hover {
@@ -174,19 +156,18 @@
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   }
 
-  .kanban-card .card-title a {
-    color: var(--text-primary);
+  .card-title {
     font-weight: 600;
     font-size: 0.95rem;
-    text-decoration: none;
+    color: var(--text-primary);
+    margin-right: 25px;
   }
 
-  .kanban-card .card-company {
+  .card-company {
     color: var(--text-secondary);
     font-size: 0.85rem;
   }
 
-  /* Product List Styling */
   .card-product-list {
     margin-top: 0.75rem;
     padding-top: 0.75rem;
@@ -210,7 +191,6 @@
   .card-product-list i {
     font-size: 0.9rem;
   }
-
 
   .card-footer-details {
     margin-top: 1rem;
@@ -236,16 +216,29 @@
     padding: 0.2rem 0.5rem;
     border-radius: 6px;
   }
+
+  .view-detail-btn {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    color: #9ca3af;
+    text-decoration: none;
+    transition: var(--transition-fast);
+    font-size: 1.1rem;
+  }
+
+  .view-detail-btn:hover {
+    color: #3b82f6;
+    transform: scale(1.2);
+  }
 </style>
 
-<div class="kanban-container-wrapper" data-aos="fade">
+<div class="kanban-container-wrapper">
   <div class="kanban-header">
     <div class="kanban-title">
-      <h1>Papan Kanban</h1>
+      <h1>Papan Kanban Peluang</h1>
     </div>
-    <div class="kanban-actions">
-      <a href="<?= BASE_URL; ?>/deals" class="btn"><i class="bi bi-table me-2"></i>Tampilan Tabel</a>
-    </div>
+    <div class="kanban-actions"><a href="<?= BASE_URL; ?>/deals" class="btn"><i class="bi bi-table me-2"></i>Tampilan Tabel</a></div>
   </div>
 
   <div class="kanban-board">
@@ -267,40 +260,31 @@
           <span class="stage-count" id="count-<?= $stageSlug ?>"><?= count($deals) ?></span>
         </div>
         <div class="kanban-cards" data-stage="<?= htmlspecialchars($stage) ?>">
-          <?php if (empty($deals)): ?>
-          <?php else: ?>
-            <?php foreach ($deals as $deal): ?>
-              <div class="kanban-card" data-id="<?= $deal->deal_id ?>" draggable="<?= can('update', 'deals') ? 'true' : 'false' ?>">
-                <h6 class="card-title mb-1">
-                  <a href="<?= BASE_URL; ?>/deals/detail/<?= $deal->deal_id; ?>">
-                    <?= htmlspecialchars($deal->name) ?>
-                  </a>
-                </h6>
-                <p class="card-company mb-2"><?= htmlspecialchars($deal->company_name) ?></p>
+          <?php foreach ($deals as $deal): ?>
+            <div class="kanban-card" data-id="<?= $deal->deal_id ?>" draggable="<?= can('update', 'deals') ? 'true' : 'false' ?>">
 
-                <?php if (!empty($deal->product_names)): ?>
-                  <div class="card-product-list">
-                    <ul>
-                      <li>
-                        <i class="bi bi-box-seam"></i>
-                        <span><?= htmlspecialchars($deal->product_names); ?></span>
-                      </li>
-                    </ul>
-                  </div>
-                <?php endif; ?>
+              <a href="<?= BASE_URL; ?>/deals/detail/<?= $deal->deal_id; ?>" class="view-detail-btn" title="Lihat Detail">
+                <i class="bi bi-eye-fill"></i>
+              </a>
 
-                <div class="card-footer-details">
-                  <div class="card-owner">
-                    <i class="bi bi-person-circle"></i>
-                    <span><?= htmlspecialchars($deal->owner_name) ?></span>
-                  </div>
-                  <div class="card-value">
-                    Rp <?= number_format($deal->value, 0, ',', '.') ?>
-                  </div>
+              <h6 class="card-title mb-1"><?= htmlspecialchars($deal->company_name) ?></h6>
+              <p class="card-company mb-2"><?= htmlspecialchars($deal->name) ?></p>
+
+              <?php if (!empty($deal->product_names)): ?>
+                <div class="card-product-list">
+                  <ul>
+                    <li><i class="bi bi-box-seam"></i><span><?= htmlspecialchars($deal->product_names); ?></span></li>
+                  </ul>
                 </div>
+              <?php endif; ?>
+
+              <div class="card-footer-details">
+                <div class="card-owner"><i class="bi bi-person-circle"></i><span><?= htmlspecialchars($deal->owner_name) ?></span></div>
+                <div class="card-value">Rp <?= number_format($deal->value, 0, ',', '.') ?></div>
               </div>
-            <?php endforeach; ?>
-          <?php endif; ?>
+
+            </div>
+          <?php endforeach; ?>
         </div>
       </div>
     <?php endforeach; ?>
@@ -308,7 +292,6 @@
 </div>
 
 <script>
-  // JavaScript logic remains the same
   document.addEventListener('DOMContentLoaded', function() {
     <?php if (!can('update', 'deals')): ?>
       return;
@@ -317,9 +300,15 @@
     const cards = document.querySelectorAll('.kanban-card[draggable="true"]');
     const columns = document.querySelectorAll('.kanban-cards');
     let draggedCard = null;
+    let isDragging = false;
 
     cards.forEach(card => {
       card.addEventListener('dragstart', (e) => {
+        if (e.target.tagName.toLowerCase() === 'a' || e.target.tagName.toLowerCase() === 'i') {
+          e.preventDefault();
+          return;
+        }
+        isDragging = true;
         draggedCard = card;
         setTimeout(() => card.classList.add('dragging'), 0);
         e.dataTransfer.effectAllowed = 'move';
@@ -328,8 +317,11 @@
       card.addEventListener('dragend', () => {
         if (draggedCard) {
           draggedCard.classList.remove('dragging');
-          draggedCard = null;
         }
+        draggedCard = null;
+        setTimeout(() => {
+          isDragging = false;
+        }, 50);
       });
     });
 
@@ -351,7 +343,8 @@
 
         if (draggedCard && targetColumn !== draggedCard.parentElement) {
           const originalColumn = draggedCard.parentElement;
-          targetColumn.appendChild(draggedCard);
+          // **PERUBAHAN POSISI DROP DI SINI**
+          targetColumn.prepend(draggedCard); // Menggunakan prepend() untuk menempatkan di paling atas
 
           updateDealStage(
             draggedCard.dataset.id,

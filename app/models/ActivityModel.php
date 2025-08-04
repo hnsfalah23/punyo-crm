@@ -31,6 +31,65 @@ class ActivityModel
     return $this->db->single();
   }
 
+  public function getActivitiesByItemType($itemType)
+  {
+    $query = "
+          SELECT a.*, u.name as owner_name, l.name as lead_name 
+          FROM activities a 
+          JOIN users u ON a.owner_id = u.user_id 
+          LEFT JOIN leads l ON a.related_item_id = l.lead_id AND a.related_item_type = 'lead'
+          WHERE a.related_item_type = :item_type
+          ORDER BY a.start_time DESC
+      ";
+    $this->db->query($query);
+    $this->db->bind(':item_type', $itemType);
+    return $this->db->resultSet();
+  }
+
+  public function getAllActivitiesDetails($params = [])
+  {
+    $bindings = [];
+    $whereClause = '';
+
+    if (isset($params['scope_type'])) {
+      if ($params['scope_type'] == 'division') {
+        $whereClause .= ' AND u.division_id = :division_id';
+        $bindings[':division_id'] = $params['scope_value'];
+      } elseif ($params['scope_type'] == 'self') {
+        $whereClause .= ' AND a.owner_id = :owner_id';
+        $bindings[':owner_id'] = $params['scope_value'];
+      }
+    }
+
+    $this->db->query("
+          SELECT 
+              a.*,
+              u.name as owner_name,
+              CASE 
+                  WHEN a.related_item_type = 'lead' THEN l.name
+                  WHEN a.related_item_type = 'deal' THEN d.name
+                  ELSE 'N/A'
+              END as related_item_name,
+              CASE 
+                  WHEN a.related_item_type = 'lead' THEN CONCAT('leads/detail/', a.related_item_id)
+                  WHEN a.related_item_type = 'deal' THEN CONCAT('deals/detail/', a.related_item_id)
+                  ELSE '#'
+              END as related_item_link
+          FROM activities a
+          JOIN users u ON a.owner_id = u.user_id
+          LEFT JOIN leads l ON a.related_item_id = l.lead_id AND a.related_item_type = 'lead'
+          LEFT JOIN deals d ON a.related_item_id = d.deal_id AND a.related_item_type = 'deal'
+          WHERE 1=1 {$whereClause}
+          ORDER BY a.start_time DESC
+      ");
+
+    foreach ($bindings as $key => $val) {
+      $this->db->bind($key, $val);
+    }
+
+    return $this->db->resultSet();
+  }
+
   public function addActivity($data)
   {
     $this->db->query('INSERT INTO activities (name, type, description, start_time, end_time, owner_id, related_item_id, related_item_type, documentation_photo) VALUES (:name, :type, :description, :start_time, :end_time, :owner_id, :related_item_id, :related_item_type, :documentation_photo)');

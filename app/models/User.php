@@ -10,6 +10,21 @@ class User
     $this->db = new Database;
   }
 
+  public function login($email, $password)
+  {
+    $this->db->query('SELECT * FROM users WHERE email = :email');
+    $this->db->bind(':email', $email);
+    $row = $this->db->single();
+
+    if ($row) {
+      $hashed_password = $row->password;
+      if (password_verify($password, $hashed_password)) {
+        return $row;
+      }
+    }
+    return false;
+  }
+
   public function findUserByEmail($email)
   {
     $this->db->query('SELECT * FROM users WHERE email = :email');
@@ -71,6 +86,25 @@ class User
   {
     $this->db->query('DELETE FROM users WHERE user_id = :id');
     $this->db->bind(':id', $id);
+    return $this->db->execute();
+  }
+
+  public function updateProfile($data)
+  {
+    if (!empty($data['password'])) {
+      $hashed_password = password_hash($data['password'], PASSWORD_DEFAULT);
+      $this->db->query('UPDATE users SET name = :name, email = :email, phone = :phone, profile_picture = :profile_picture, password = :password WHERE user_id = :id');
+      $this->db->bind(':password', $hashed_password);
+    } else {
+      $this->db->query('UPDATE users SET name = :name, email = :email, phone = :phone, profile_picture = :profile_picture WHERE user_id = :id');
+    }
+
+    $this->db->bind(':id', $data['id']);
+    $this->db->bind(':name', $data['name']);
+    $this->db->bind(':email', $data['email']);
+    $this->db->bind(':phone', $data['phone']);
+    $this->db->bind(':profile_picture', $data['profile_picture']);
+
     return $this->db->execute();
   }
 

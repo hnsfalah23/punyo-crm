@@ -10,32 +10,68 @@ class InstansiModel
     $this->db = new Database;
   }
 
-  // == Instansi ==
-  public function getAllInstansi($scope_ids = [])
+  private function buildWhereClause($params, &$bindings)
   {
-    $sql = 'SELECT * FROM companies';
-    if (!empty($scope_ids)) {
-      // Pilih instansi yang memiliki kesepakatan yang dimiliki oleh user dalam scope
-      $sql .= ' WHERE company_id IN (SELECT DISTINCT company_id FROM deals WHERE owner_id IN (' . implode(',', $scope_ids) . '))';
+    $sql = '';
+    if (!empty($params['search'])) {
+      $sql .= ' AND (c.name LIKE :search OR c.industry LIKE :search)';
+      $bindings[':search'] = '%' . $params['search'] . '%';
     }
-    $sql .= ' ORDER BY name ASC';
+    if (!empty($params['filter_industry'])) {
+      $sql .= ' AND c.industry = :industry';
+      $bindings[':industry'] = $params['filter_industry'];
+    }
+    return $sql;
+  }
+
+  public function getInstansi($params = [])
+  {
+    $bindings = [];
+    $whereClause = $this->buildWhereClause($params, $bindings);
+
+    $sql = "
+      SELECT 
+        c.*, 
+        GROUP_CONCAT(DISTINCT ct.name SEPARATOR ', ') as contact_names,
+        GROUP_CONCAT(DISTINCT d.name SEPARATOR ', ') as deal_names
+      FROM companies as c
+      LEFT JOIN contacts as ct ON c.company_id = ct.company_id
+      LEFT JOIN deals as d ON c.company_id = d.company_id
+      WHERE 1=1 {$whereClause}
+      GROUP BY c.company_id
+      ORDER BY c.name ASC
+    ";
+
+    if (isset($params['limit']) && isset($params['offset'])) {
+      $sql .= ' LIMIT :limit OFFSET :offset';
+      $bindings[':limit'] = (int) $params['limit'];
+      $bindings[':offset'] = (int) $params['offset'];
+    }
+
     $this->db->query($sql);
+    foreach ($bindings as $key => &$val) {
+      $type = is_int($val) ? PDO::PARAM_INT : PDO::PARAM_STR;
+      $this->db->bind($key, $val, $type);
+    }
     return $this->db->resultSet();
   }
 
-
-  public function addInstansi($data)
+  public function getTotalInstansi($params = [])
   {
-    $this->db->query('INSERT INTO companies (name, website, industry, description, gmaps_location) VALUES (:name, :website, :industry, :description, :gmaps_location)');
-    $this->db->bind(':name', $data['name']);
-    $this->db->bind(':website', $data['website']);
-    $this->db->bind(':industry', $data['industry']);
-    $this->db->bind(':description', $data['description']);
-    $this->db->bind(':gmaps_location', $data['gmaps_location']);
-    if ($this->db->execute()) {
-      return $this->db->lastInsertId();
+    $bindings = [];
+    $whereClause = $this->buildWhereClause($params, $bindings);
+    $this->db->query("SELECT COUNT(DISTINCT c.company_id) as total FROM companies c WHERE 1=1 {$whereClause}");
+    foreach ($bindings as $key => &$val) {
+      $this->db->bind($key, $val);
     }
-    return false;
+    $result = $this->db->single();
+    return $result ? $result->total : 0;
+  }
+
+  public function getDistinctIndustries()
+  {
+    $this->db->query("SELECT DISTINCT industry FROM companies WHERE industry IS NOT NULL AND industry != '' ORDER BY industry ASC");
+    return $this->db->resultSet();
   }
 
   public function getInstansiById($id)
@@ -47,10 +83,24 @@ class InstansiModel
 
   public function getInstansiByName($name)
   {
-    $this->db->query('SELECT * FROM companies WHERE name = :name LIMIT 1');
+    $this->db->query('SELECT * FROM companies WHERE name = :name');
     $this->db->bind(':name', $name);
-    $result = $this->db->single();
-    return $result ? $result : false;
+    return $this->db->single();
+  }
+
+  public function addInstansi($data)
+  {
+    $this->db->query('INSERT INTO companies (name, website, industry, description, gmaps_location) VALUES (:name, :website, :industry, :description, :gmaps_location)');
+    $this->db->bind(':name', $data['name']);
+    $this->db->bind(':website', $data['website']);
+    $this->db->bind(':industry', $data['industry']);
+    $this->db->bind(':description', $data['description']);
+    $this->db->bind(':gmaps_location', $data['gmaps_location']);
+
+    if ($this->db->execute()) {
+      return $this->db->lastInsertId();
+    }
+    return false;
   }
 
   public function updateInstansi($data)
@@ -67,103 +117,21 @@ class InstansiModel
 
   public function deleteInstansi($id)
   {
-    // Diperbarui: Hapus kesepakatan terkait terlebih dahulu untuk menghindari error constraint
-    // 1. Hapus semua kesepakatan (deals) yang terkait dengan instansi ini.
-    $this->db->query('DELETE FROM deals WHERE company_id = :company_id');
-    $this->db->bind(':company_id', $id);
-    $this->db->execute();
-
-    // 2. Setelah kesepakatan dihapus, baru aman untuk menghapus instansi.
-    // ON DELETE CASCADE akan secara otomatis menghapus kontak yang terkait.
     $this->db->query('DELETE FROM companies WHERE company_id = :id');
     $this->db->bind(':id', $id);
     return $this->db->execute();
   }
 
-  // == Kontak ==
-  public function getContactsByInstansiId($id)
+  public function getContactsByInstansiId($company_id)
   {
-    $this->db->query('SELECT * FROM contacts WHERE company_id = :id ORDER BY name ASC');
-    $this->db->bind(':id', $id);
+    $this->db->query('SELECT * FROM contacts WHERE company_id = :company_id ORDER BY name ASC');
+    $this->db->bind(':company_id', $company_id);
     return $this->db->resultSet();
   }
-
-  public function getAllContactsWithCompanyName()
-  {
-    $this->db->query('
-            SELECT ct.*, co.name as company_name
-            FROM contacts as ct
-            JOIN companies as co ON ct.company_id = co.company_id
-            ORDER BY ct.name ASC
-        ');
-    return $this->db->resultSet();
-  }
-
-  public function addContact($data)
-  {
-    $this->db->query('INSERT INTO contacts (name, contact_type, priority, email, job_title, phone, company_id) VALUES (:name, :contact_type, :priority, :email, :job_title, :phone, :company_id)');
-    $this->db->bind(':name', $data['name']);
-    $this->db->bind(':contact_type', $data['contact_type']);
-    $this->db->bind(':priority', $data['priority']);
-    $this->db->bind(':email', $data['email']);
-    $this->db->bind(':job_title', $data['job_title']);
-    $this->db->bind(':phone', $data['phone']);
-    $this->db->bind(':company_id', $data['company_id']);
-    if ($this->db->execute()) {
-      return $this->db->lastInsertId();
-    }
-    return false;
-  }
-
-  public function getContactById($id)
-  {
-    $this->db->query('SELECT * FROM contacts WHERE contact_id = :id');
-    $this->db->bind(':id', $id);
-    return $this->db->single();
-  }
-
-  public function updateContact($data)
-  {
-    $this->db->query('UPDATE contacts SET name = :name, contact_type = :contact_type, priority = :priority, email = :email, job_title = :job_title, phone = :phone WHERE contact_id = :id');
-    $this->db->bind(':id', $data['id']);
-    $this->db->bind(':name', $data['name']);
-    $this->db->bind(':contact_type', $data['contact_type']);
-    $this->db->bind(':priority', $data['priority']);
-    $this->db->bind(':email', $data['email']);
-    $this->db->bind(':job_title', $data['job_title']);
-    $this->db->bind(':phone', $data['phone']);
-    return $this->db->execute();
-  }
-
-  public function deleteContact($id)
-  {
-    // Diperbarui: Hapus kesepakatan (deals) yang terkait dengan kontak ini terlebih dahulu.
-    $this->db->query('DELETE FROM deals WHERE contact_id = :contact_id');
-    $this->db->bind(':contact_id', $id);
-    $this->db->execute();
-
-    // Setelah itu, baru aman untuk menghapus kontak.
-    $this->db->query('DELETE FROM contacts WHERE contact_id = :id');
-    $this->db->bind(':id', $id);
-    return $this->db->execute();
-  }
-
 
   public function getDealsByInstansiId($id)
   {
-    $this->db->query('
-            SELECT 
-                d.*, 
-                u.name as owner_name,
-                GROUP_CONCAT(p.name SEPARATOR ", ") as product_names
-            FROM deals as d
-            JOIN users as u ON d.owner_id = u.user_id
-            LEFT JOIN deal_products as dp ON d.deal_id = dp.deal_id
-            LEFT JOIN products as p ON dp.product_id = p.product_id
-            WHERE d.company_id = :id
-            GROUP BY d.deal_id
-            ORDER BY d.created_at DESC
-        ');
+    $this->db->query('SELECT * FROM deals WHERE company_id = :id');
     $this->db->bind(':id', $id);
     return $this->db->resultSet();
   }

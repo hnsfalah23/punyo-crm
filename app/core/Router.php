@@ -3,7 +3,7 @@
 
 class Router
 {
-  protected $currentController = 'Home';
+  protected $currentController = 'Dashboard'; // Controller default
   protected $currentMethod = 'index';
   protected $params = [];
 
@@ -11,17 +11,21 @@ class Router
   {
     $url = $this->getUrl();
 
-    // Cek apakah controller ada
-    if (isset($url[0]) && file_exists('../app/controllers/' . ucwords($url[0]) . '.php')) {
-      $this->currentController = ucwords($url[0]);
-      unset($url[0]);
+    // Cek controller dari URL
+    if (isset($url[0])) {
+      // Ubah huruf pertama menjadi kapital, contoh: 'prospek' -> 'Prospek'
+      $controllerName = ucwords($url[0]);
+      if (file_exists('../app/controllers/' . $controllerName . '.php')) {
+        $this->currentController = $controllerName;
+        unset($url[0]);
+      }
     }
 
-    // Panggil controller
+    // Muat controller
     require_once '../app/controllers/' . $this->currentController . '.php';
     $this->currentController = new $this->currentController;
 
-    // Cek apakah method ada
+    // Cek method dari URL
     if (isset($url[1])) {
       if (method_exists($this->currentController, $url[1])) {
         $this->currentMethod = $url[1];
@@ -32,7 +36,7 @@ class Router
     // Ambil parameter
     $this->params = $url ? array_values($url) : [];
 
-    // Jalankan controller & method, serta kirimkan params jika ada
+    // Panggil controller, method, dengan parameter
     call_user_func_array([$this->currentController, $this->currentMethod], $this->params);
   }
 

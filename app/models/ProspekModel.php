@@ -1,7 +1,7 @@
 <?php
-// app/models/LeadModel.php
+// app/models/ProspekModel.php
 
-class LeadModel
+class ProspekModel
 {
   private $db;
 
@@ -24,7 +24,6 @@ class LeadModel
       $sql .= ' AND (l.name LIKE :search OR l.company_name LIKE :search)';
       $bindings[':search'] = '%' . $params['search'] . '%';
     }
-    // Logika filter berdasarkan peran pengguna (FIX UTAMA DI SINI)
     if (isset($params['scope_type'])) {
       if ($params['scope_type'] == 'division') {
         $sql .= ' AND u.division_id = :division_id';
@@ -37,18 +36,18 @@ class LeadModel
     return $sql;
   }
 
-  public function getLeads($params = [])
+  public function getProspek($params = [])
   {
     $bindings = [];
     $whereClause = $this->buildWhereClause($params, $bindings);
 
     $sql = "
-        SELECT l.*, u.name as owner_name, u.profile_picture as owner_photo
-        FROM leads as l
-        JOIN users as u ON l.owner_id = u.user_id
-        WHERE 1=1 {$whereClause}
-        ORDER BY l.created_at DESC
-    ";
+            SELECT l.*, u.name as owner_name, u.profile_picture as owner_photo
+            FROM leads as l
+            JOIN users as u ON l.owner_id = u.user_id
+            WHERE 1=1 {$whereClause}
+            ORDER BY l.created_at DESC
+        ";
 
     if (isset($params['limit']) && isset($params['offset'])) {
       $sql .= ' LIMIT :limit OFFSET :offset';
@@ -65,17 +64,17 @@ class LeadModel
     return $this->db->resultSet();
   }
 
-  public function getTotalLeads($params = [])
+  public function getTotalProspek($params = [])
   {
     $bindings = [];
     $whereClause = $this->buildWhereClause($params, $bindings);
 
     $sql = "
-        SELECT COUNT(l.lead_id) as total 
-        FROM leads as l 
-        JOIN users as u ON l.owner_id = u.user_id 
-        WHERE 1=1 {$whereClause}
-    ";
+            SELECT COUNT(l.lead_id) as total 
+            FROM leads as l 
+            JOIN users as u ON l.owner_id = u.user_id 
+            WHERE 1=1 {$whereClause}
+        ";
 
     $this->db->query($sql);
     foreach ($bindings as $key => &$val) {
@@ -86,7 +85,7 @@ class LeadModel
     return $result ? $result->total : 0;
   }
 
-  public function getLeadById($id)
+  public function getProspekById($id)
   {
     $this->db->query('
             SELECT l.*, u.name as owner_name
@@ -98,7 +97,7 @@ class LeadModel
     return $this->db->single();
   }
 
-  public function addLead($data)
+  public function addProspek($data)
   {
     $this->db->query('INSERT INTO leads (name, status, owner_id, source, company_name, email, phone) VALUES (:name, :status, :owner_id, :source, :company_name, :email, :phone)');
     $this->db->bind(':name', $data['name']);
@@ -111,7 +110,7 @@ class LeadModel
     return $this->db->execute();
   }
 
-  public function updateLead($data)
+  public function updateProspek($data)
   {
     $this->db->query('UPDATE leads SET name = :name, status = :status, source = :source, company_name = :company_name, email = :email, phone = :phone WHERE lead_id = :id');
     $this->db->bind(':id', $data['id']);
@@ -124,7 +123,7 @@ class LeadModel
     return $this->db->execute();
   }
 
-  public function deleteLead($id)
+  public function deleteProspek($id)
   {
     $this->db->query('DELETE FROM leads WHERE lead_id = :id');
     $this->db->bind(':id', $id);

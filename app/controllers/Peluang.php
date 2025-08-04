@@ -1,32 +1,27 @@
 <?php
-// app/controllers/Deals.php
+// app/controllers/Peluang.php
 
-// =======================================================
-// == KELAS PDF KUSTOM DENGAN FOOTER ==
-// =======================================================
 require_once('../app/libraries/tcpdf/tcpdf.php');
 class ProposalPDF extends TCPDF
 {
-  // Custom Footer untuk alamat perusahaan
   public function Footer()
   {
-    $this->SetY(-25); // Posisi 25mm dari bawah
+    $this->SetY(-25);
     $this->SetFont('helvetica', '', 8);
     $this->SetTextColor(100, 100, 100);
-    // Garis pemisah
     $this->Line(15, $this->GetY(), 195, $this->GetY());
     $this->Ln(2);
-    // Teks alamat
     $this->MultiCell(0, 4, "PT. Sriwijaya Internet Services\nJalan Pendawa Nomor 834, Kelurahan 2 Ilir, Kecamatan Ilir Timur II, Palembang, Sumatera Selatan 30118\nemail: office@sis.net.id", 0, 'C');
   }
   public function Header() {}
 }
 
 
-class Deals extends Controller
+class Peluang extends Controller
 {
-  private $dealModel;
+  private $peluangModel;
   private $instansiModel;
+  private $kontakModel;
   private $productModel;
   private $userModel;
   private $proposalModel;
@@ -37,8 +32,9 @@ class Deals extends Controller
       header('Location: ' . BASE_URL . '/auth/login');
       exit;
     }
-    $this->dealModel = $this->model('DealModel');
+    $this->peluangModel = $this->model('PeluangModel');
     $this->instansiModel = $this->model('InstansiModel');
+    $this->kontakModel = $this->model('KontakModel');
     $this->productModel = $this->model('Product');
     $this->userModel = $this->model('User');
     $this->proposalModel = $this->model('ProposalModel');
@@ -50,8 +46,7 @@ class Deals extends Controller
     $scope_value = null;
     $user_role_id = $_SESSION['user_role_id'];
     $user_id = $_SESSION['user_id'];
-    $userModel = $this->model('User');
-    $currentUser = $userModel->getUserById($user_id);
+    $currentUser = $this->userModel->getUserById($user_id);
     $user_division_id = $currentUser->division_id ?? null;
     if (in_array($user_role_id, [3, 4, 5])) {
       $scope_type = 'division';
@@ -81,23 +76,19 @@ class Deals extends Controller
       'scope_value' => $scope['value']
     ];
 
-    $deals = $this->dealModel->getDeals($params);
-    $totalDeals = $this->dealModel->getTotalDeals($params);
-    $totalPages = ($params['limit'] > 0) ? ceil($totalDeals / $params['limit']) : 1;
-
-    // Mengambil semua peluang (tanpa paginasi) untuk modal
-    $allDealsForActivity = $this->dealModel->getDeals(['scope_type' => $scope['type'], 'scope_value' => $scope['value']]);
+    $peluang = $this->peluangModel->getPeluang($params);
+    $totalPeluang = $this->peluangModel->getTotalPeluang($params);
+    $totalPages = ($params['limit'] > 0) ? ceil($totalPeluang / $params['limit']) : 1;
 
     $data = [
       'title' => 'Manajemen Peluang',
-      'deals' => $deals,
-      'total_deals' => $totalDeals,
+      'deals' => $peluang, // 'deals' untuk kompatibilitas view
+      'total_deals' => $totalPeluang,
       'total_pages' => $totalPages,
       'current_page' => $_GET['page'] ?? 1,
       'limit' => $params['limit'],
       'search' => $params['search'],
       'stage' => $params['stage'],
-      'all_deals_for_activity' => $allDealsForActivity // Kirim data peluang ke view
     ];
     $this->renderView('pages/deals/index', $data);
   }
@@ -110,21 +101,21 @@ class Deals extends Controller
       exit;
     }
     $scope = $this->getUserScope();
-    $deals = $this->dealModel->getDeals(['scope_type' => $scope['type'], 'scope_value' => $scope['value']]);
+    $peluang = $this->peluangModel->getPeluang(['scope_type' => $scope['type'], 'scope_value' => $scope['value']]);
     $dealsByStage = ['Analisis Kebutuhan' => [], 'Proposal' => [], 'Negosiasi' => [], 'Menang' => [], 'Kalah' => []];
-    foreach ($deals as $deal) {
+    foreach ($peluang as $deal) {
       if (array_key_exists($deal->stage, $dealsByStage)) {
         $dealsByStage[$deal->stage][] = $deal;
       }
     }
-    $data = ['title' => 'Papan Kanban Kesepakatan', 'dealsByStage' => $dealsByStage];
+    $data = ['title' => 'Papan Kanban Peluang', 'dealsByStage' => $dealsByStage];
     $this->renderView('pages/deals/kanban', $data);
   }
 
   public function add()
   {
     if (!can('create', 'deals')) {
-      header('Location: ' . BASE_URL . '/deals');
+      header('Location: ' . BASE_URL . '/peluang');
       exit;
     }
     if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -132,11 +123,7 @@ class Deals extends Controller
       $products_in_deal = [];
       if (isset($_POST['products'])) {
         foreach ($_POST['products'] as $product_data) {
-          $products_in_deal[] = [
-            'id' => $product_data['id'],
-            'quantity' => $product_data['quantity'],
-            'price' => $product_data['price']
-          ];
+          $products_in_deal[] = ['id' => $product_data['id'], 'quantity' => $product_data['quantity'], 'price' => $product_data['price']];
         }
       }
       $data = [
@@ -157,26 +144,25 @@ class Deals extends Controller
       }
 
       if (empty($data['contact_id_err'])) {
-        $newDealId = $this->dealModel->addDeal($data);
+        $newDealId = $this->peluangModel->addPeluang($data);
         if ($newDealId) {
           if (!empty($data['products_in_deal'])) {
-            $this->dealModel->addMultipleProductsToDeal($newDealId, $data['products_in_deal']);
+            $this->peluangModel->addMultipleProductsToPeluang($newDealId, $data['products_in_deal']);
           }
-          flash('deal_message', 'Kesepakatan baru berhasil ditambahkan.');
-          header('Location: ' . BASE_URL . '/deals');
+          flash('deal_message', 'Peluang baru berhasil ditambahkan.');
+          header('Location: ' . BASE_URL . '/peluang');
           exit;
         } else {
-          flash('deal_message', 'Gagal menambahkan kesepakatan.', 'alert alert-danger');
+          flash('deal_message', 'Gagal menambahkan peluang.', 'alert alert-danger');
         }
       }
-
-      $data['title'] = 'Tambah Kesepakatan';
+      $data['title'] = 'Tambah Peluang';
       $data['contacts'] = $this->instansiModel->getAllContactsWithCompanyName();
       $data['categories'] = $this->productModel->getAllCategories();
       $this->renderView('pages/deals/add', $data);
     } else {
       $data = [
-        'title' => 'Tambah Kesepakatan',
+        'title' => 'Tambah Peluang',
         'contacts' => $this->instansiModel->getAllContactsWithCompanyName(),
         'categories' => $this->productModel->getAllCategories(),
         'name' => '',
@@ -194,99 +180,106 @@ class Deals extends Controller
   public function edit($id)
   {
     if (!can('update', 'deals')) {
-      header('Location: ' . BASE_URL . '/deals');
+      if ($this->isAjaxRequest()) {
+        $this->jsonResponse(false, 'Akses tidak diizinkan.', 403);
+      }
+      header('Location: ' . BASE_URL . '/peluang');
       exit;
     }
+
     if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-      $products_in_deal = [];
-      if (isset($_POST['products'])) {
-        foreach ($_POST['products'] as $product_data) {
-          $products_in_deal[] = [
-            'id' => $product_data['id'],
-            'quantity' => $product_data['quantity'],
-            'price' => $product_data['price']
-          ];
-        }
-      }
+      $peluang = $this->peluangModel->getPeluangById($id);
       $data = [
         'id' => $id,
         'name' => trim($_POST['name']),
-        'contact_id' => $_POST['contact_id'],
         'value' => $_POST['value'],
         'stage' => $_POST['stage'],
+        'contact_id' => $_POST['contact_id'] ?? $peluang->contact_id,
         'expected_close_date' => !empty($_POST['expected_close_date']) ? $_POST['expected_close_date'] : null,
         'requirements_notes' => trim($_POST['requirements_notes'] ?? ''),
-        'products_in_deal' => $products_in_deal,
-        'contact_id_err' => ''
       ];
 
-      if (empty($data['contact_id'])) {
-        $data['contact_id_err'] = 'Kontak harus dipilih.';
-      }
-
-      if (empty($data['contact_id_err'])) {
-        if ($this->dealModel->updateDeal($data)) {
-          $this->dealModel->removeProductsFromDeal($id);
-          if (!empty($data['products_in_deal'])) {
-            $this->dealModel->addMultipleProductsToDeal($id, $data['products_in_deal']);
-          }
-          flash('deal_message', 'Kesepakatan berhasil diupdate.');
-          header('Location: ' . BASE_URL . '/deals/edit/' . $id);
-          exit;
-        } else {
-          flash('deal_message', 'Gagal mengupdate kesepakatan.', 'alert alert-danger');
+      if ($this->peluangModel->updatePeluang($data)) {
+        if ($this->isAjaxRequest()) {
+          $this->jsonResponse(true, 'Data peluang berhasil diperbarui.');
         }
-      }
-
-      $deal = $this->dealModel->getDealById($id);
-      $data['title'] = 'Edit Kesepakatan';
-      $data['contacts'] = $this->instansiModel->getAllContactsWithCompanyName();
-      $data['categories'] = $this->productModel->getAllCategories();
-      $data['deal_products'] = $this->dealModel->getProductsByDealId($id);
-      $data['proposal'] = $this->proposalModel->getProposalByDealId($id);
-      $this->renderView('pages/deals/edit', $data);
-    } else {
-      $deal = $this->dealModel->getDealById($id);
-      if (!$deal) {
-        header('Location: ' . BASE_URL . '/deals');
+        flash('deal_message', 'Peluang berhasil diupdate.');
+        header('Location: ' . BASE_URL . '/peluang/edit/' . $id);
         exit;
+      } else {
+        if ($this->isAjaxRequest()) {
+          $this->jsonResponse(false, 'Gagal memperbarui data peluang.');
+        }
+        flash('deal_message', 'Gagal mengupdate peluang.', 'alert alert-danger');
       }
-      $data = [
-        'title' => 'Edit Kesepakatan',
-        'id' => $id,
-        'contacts' => $this->instansiModel->getAllContactsWithCompanyName(),
-        'categories' => $this->productModel->getAllCategories(),
-        'deal_products' => $this->dealModel->getProductsByDealId($id),
-        'name' => $deal->name,
-        'contact_id' => $deal->contact_id,
-        'value' => $deal->value,
-        'stage' => $deal->stage,
-        'expected_close_date' => $deal->expected_close_date,
-        'requirements_notes' => $deal->requirements_notes ?? '',
-        'proposal' => $this->proposalModel->getProposalByDealId($id),
-        'name_err' => '',
-        'contact_id_err' => ''
-      ];
-      $this->renderView('pages/deals/edit', $data);
     }
+
+    $peluang = $this->peluangModel->getPeluangById($id);
+    if (!$peluang) {
+      header('Location: ' . BASE_URL . '/peluang');
+      exit;
+    }
+    $data = [
+      'title' => 'Edit Peluang',
+      'id' => $id,
+      'contacts' => $this->instansiModel->getAllContactsWithCompanyName(),
+      'categories' => $this->productModel->getAllCategories(),
+      'deal_products' => $this->peluangModel->getProductsByPeluangId($id),
+      'name' => $peluang->name,
+      'contact_id' => $peluang->contact_id,
+      'value' => $peluang->value,
+      'stage' => $peluang->stage,
+      'expected_close_date' => $peluang->expected_close_date,
+      'requirements_notes' => $peluang->requirements_notes ?? '',
+      'proposal' => $this->proposalModel->getProposalByDealId($id),
+    ];
+    $this->renderView('pages/deals/edit', $data);
+  }
+
+  public function lengkapi($deal_id)
+  {
+    if (!can('update', 'peluang')) {
+      flash('dashboard_message', 'Anda tidak memiliki hak akses.', 'alert alert-danger');
+      header('Location: ' . BASE_URL . '/dashboard');
+      exit;
+    }
+
+    $peluang = $this->peluangModel->getPeluangById($deal_id);
+    if (!$peluang) {
+      flash('instansi_message', 'Peluang tidak ditemukan.', 'alert alert-danger');
+      header('Location: ' . BASE_URL . '/instansi');
+      exit;
+    }
+
+    $instansi = $this->instansiModel->getInstansiById($peluang->company_id);
+    $kontak = $this->kontakModel->getKontakById($peluang->contact_id);
+
+    $data = [
+      'title' => 'Lengkapi Data Konversi',
+      'peluang' => $peluang,
+      'instansi' => $instansi,
+      'kontak' => $kontak
+    ];
+
+    $this->renderView('pages/peluang/lengkapi', $data);
   }
 
   public function detail($id)
   {
     if (!can('read', 'deals')) {
-      header('Location: ' . BASE_URL . '/deals');
+      header('Location: ' . BASE_URL . '/peluang');
       exit;
     }
-    $deal = $this->dealModel->getDealById($id);
-    if (!$deal) {
-      header('Location: ' . BASE_URL . '/deals');
+    $peluang = $this->peluangModel->getPeluangById($id);
+    if (!$peluang) {
+      header('Location: ' . BASE_URL . '/peluang');
       exit;
     }
     $activityModel = $this->model('ActivityModel');
     $data = [
-      'title' => 'Detail Kesepakatan',
-      'deal' => $deal,
-      'products' => $this->dealModel->getProductsByDealId($id),
+      'title' => 'Detail Peluang',
+      'deal' => $peluang,
+      'products' => $this->peluangModel->getProductsByPeluangId($id),
       'activities' => $activityModel->getActivitiesByItemId($id, 'deal')
     ];
     $this->renderView('pages/deals/detail', $data);
@@ -295,49 +288,38 @@ class Deals extends Controller
   public function delete($id)
   {
     if (!can('delete', 'deals')) {
-      header('Location: ' . BASE_URL . '/deals');
+      header('Location: ' . BASE_URL . '/peluang');
       exit;
     }
     if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-      if ($this->dealModel->deleteDeal($id)) {
-        flash('deal_message', 'Kesepakatan berhasil dihapus.');
+      if ($this->peluangModel->deletePeluang($id)) {
+        flash('deal_message', 'Peluang berhasil dihapus.');
       } else {
-        flash('deal_message', 'Gagal menghapus kesepakatan.', 'alert alert-danger');
+        flash('deal_message', 'Gagal menghapus peluang.', 'alert alert-danger');
       }
-      header('Location: ' . BASE_URL . '/deals');
+      header('Location: ' . BASE_URL . '/peluang');
       exit;
     }
   }
 
   public function updateStage()
   {
-    header('Content-Type: application/json');
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-      echo json_encode(['success' => false, 'message' => 'Metode tidak diizinkan.']);
-      exit;
-    }
+    if (!$this->isAjaxRequest()) exit;
     if (!can('update', 'deals')) {
-      echo json_encode(['success' => false, 'message' => 'Anda tidak memiliki izin.']);
-      exit;
+      $this->jsonResponse(false, 'Anda tidak memiliki izin.', 403);
     }
     $input = json_decode(file_get_contents('php://input'), true);
     $dealId = $input['deal_id'] ?? null;
     $newStage = $input['stage'] ?? null;
     if (!$dealId || !$newStage) {
-      echo json_encode(['success' => false, 'message' => 'Data tidak lengkap.']);
-      exit;
+      $this->jsonResponse(false, 'Data tidak lengkap.', 400);
     }
-    $scope = $this->getUserScope();
-    if (!$this->dealModel->checkDealAccess($dealId, $_SESSION['user_id'], $_SESSION['user_role_id'], $scope['value'])) {
-      echo json_encode(['success' => false, 'message' => 'Anda tidak memiliki akses.']);
-      exit;
-    }
-    if ($this->dealModel->updateDealStage($dealId, $newStage)) {
-      echo json_encode(['success' => true, 'message' => 'Stage berhasil diperbarui.']);
+
+    if ($this->peluangModel->updatePeluangStage($dealId, $newStage)) {
+      $this->jsonResponse(true, 'Stage berhasil diperbarui.');
     } else {
-      echo json_encode(['success' => false, 'message' => 'Gagal memperbarui stage.']);
+      $this->jsonResponse(false, 'Gagal memperbarui stage.');
     }
-    exit;
   }
 
   public function updateProposal($id)
@@ -349,31 +331,29 @@ class Deals extends Controller
       if ($this->proposalModel->saveOrUpdateProposal($proposalData)) {
         flash('deal_message', 'Data proposal berhasil disimpan.');
         if (isset($_POST['action']) && $_POST['action'] == 'save_and_print') {
-          header('Location: ' . BASE_URL . '/deals/generateProposalPdf/' . $id);
+          header('Location: ' . BASE_URL . '/peluang/generateProposalPdf/' . $id);
         } else {
-          header('Location: ' . BASE_URL . '/deals/edit/' . $id);
+          header('Location: ' . BASE_URL . '/peluang/edit/' . $id);
         }
       } else {
         flash('deal_message', 'Gagal menyimpan data proposal.', 'alert alert-danger');
-        header('Location: ' . BASE_URL . '/deals/edit/' . $id);
+        header('Location: ' . BASE_URL . '/peluang/edit/' . $id);
       }
     } else {
-      header('Location: ' . BASE_URL . '/deals/edit/' . $id);
+      header('Location: ' . BASE_URL . '/peluang/edit/' . $id);
     }
     exit;
   }
 
   public function generateProposalPdf($deal_id)
   {
-    $deal = $this->dealModel->getDealById($deal_id);
+    $deal = $this->peluangModel->getPeluangById($deal_id);
     $proposal = $this->proposalModel->getProposalByDealId($deal_id);
 
-    if (!$deal || !$proposal) {
-      die('Data tidak ditemukan.');
-    }
+    if (!$deal || !$proposal) die('Data tidak ditemukan.');
 
+    // ... Logika pembuatan PDF tetap sama ...
     $pdf = new ProposalPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, 'A4', true, 'UTF-8', false);
-
     $pdf->SetCreator('Punyo CRM');
     $pdf->SetAuthor($deal->owner_name);
     $pdf->SetTitle('Proposal Penawaran - ' . $deal->name);
@@ -486,6 +466,24 @@ class Deals extends Controller
     $pdf->Cell(0, 6, 'Account Manager', 0, 1);
 
     $pdf->Output('Proposal-' . $deal->name . '.pdf', 'I');
+  }
+
+  private function isAjaxRequest()
+  {
+    return !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest';
+  }
+
+  private function jsonResponse($success, $message, $httpCode = 200, $data = [])
+  {
+    if (ob_get_level() > 0) ob_end_clean();
+    header('Content-Type: application/json');
+    http_response_code($httpCode);
+    $response = ['success' => $success, 'message' => $message];
+    if (!empty($data)) {
+      $response['data'] = $data;
+    }
+    echo json_encode($response);
+    exit;
   }
 
   private function renderView($view, $data = [])

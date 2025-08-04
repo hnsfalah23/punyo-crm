@@ -238,7 +238,7 @@
     <div class="kanban-title">
       <h1>Papan Kanban Peluang</h1>
     </div>
-    <div class="kanban-actions"><a href="<?= BASE_URL; ?>/deals" class="btn"><i class="bi bi-table me-2"></i>Tampilan Tabel</a></div>
+    <div class="kanban-actions"><a href="<?= BASE_URL; ?>/peluang" class="btn"><i class="bi bi-table me-2"></i>Tampilan Tabel</a></div>
   </div>
 
   <div class="kanban-board">

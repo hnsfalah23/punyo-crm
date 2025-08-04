@@ -1,18 +1,13 @@
 <?php
-// app/models/DealModel.php
+// app/models/PeluangModel.php
 
-class DealModel
+class PeluangModel
 {
   private $db;
 
   public function __construct()
   {
     $this->db = new Database;
-  }
-
-  public function getDbError()
-  {
-    return $this->db->getError();
   }
 
   private function buildWhereClause($params, &$bindings)
@@ -38,28 +33,28 @@ class DealModel
     return $sql;
   }
 
-  public function getDeals($params = [])
+  public function getPeluang($params = [])
   {
     $bindings = [];
     $whereClause = $this->buildWhereClause($params, $bindings);
 
     $sql = "
-      SELECT 
-        d.*, 
-        c.name as company_name, 
-        u.name as owner_name,
-        ct.name as contact_name,
-        GROUP_CONCAT(DISTINCT p.name SEPARATOR ', ') as product_names
-      FROM deals as d
-      JOIN companies as c ON d.company_id = c.company_id
-      JOIN users as u ON d.owner_id = u.user_id
-      JOIN contacts as ct ON d.contact_id = ct.contact_id
-      LEFT JOIN deal_products as dp ON d.deal_id = dp.deal_id
-      LEFT JOIN products as p ON dp.product_id = p.product_id
-      WHERE 1=1 {$whereClause}
-      GROUP BY d.deal_id
-      ORDER BY d.created_at DESC
-    ";
+            SELECT 
+                d.*, 
+                c.name as company_name, 
+                u.name as owner_name,
+                ct.name as contact_name,
+                GROUP_CONCAT(DISTINCT p.name SEPARATOR ', ') as product_names
+            FROM deals as d
+            JOIN companies as c ON d.company_id = c.company_id
+            JOIN users as u ON d.owner_id = u.user_id
+            JOIN contacts as ct ON d.contact_id = ct.contact_id
+            LEFT JOIN deal_products as dp ON d.deal_id = dp.deal_id
+            LEFT JOIN products as p ON dp.product_id = p.product_id
+            WHERE 1=1 {$whereClause}
+            GROUP BY d.deal_id
+            ORDER BY d.created_at DESC
+        ";
 
     if (isset($params['limit']) && isset($params['offset'])) {
       $sql .= ' LIMIT :limit OFFSET :offset';
@@ -76,19 +71,19 @@ class DealModel
     return $this->db->resultSet();
   }
 
-  public function getTotalDeals($params = [])
+  public function getTotalPeluang($params = [])
   {
     $bindings = [];
     $whereClause = $this->buildWhereClause($params, $bindings);
 
     $sql = "
-      SELECT COUNT(DISTINCT d.deal_id) as total 
-      FROM deals as d
-      JOIN companies as c ON d.company_id = c.company_id
-      JOIN users as u ON d.owner_id = u.user_id
-      JOIN contacts as ct ON d.contact_id = ct.contact_id
-      WHERE 1=1 {$whereClause}
-    ";
+            SELECT COUNT(DISTINCT d.deal_id) as total 
+            FROM deals as d
+            JOIN companies as c ON d.company_id = c.company_id
+            JOIN users as u ON d.owner_id = u.user_id
+            JOIN contacts as ct ON d.contact_id = ct.contact_id
+            WHERE 1=1 {$whereClause}
+        ";
 
     $this->db->query($sql);
     foreach ($bindings as $key => &$val) {
@@ -99,58 +94,58 @@ class DealModel
     return $result ? $result->total : 0;
   }
 
-  public function getDealById($id)
+  public function getPeluangById($id)
   {
     $this->db->query('
-      SELECT 
-        d.*, 
-        c.name as company_name, 
-        c.company_id,
-        u.name as owner_name, 
-        u.division_id as owner_division_id,
-        ct.name as contact_name,
-        ct.email as contact_email,
-        ct.phone as contact_phone
-      FROM deals as d
-      JOIN companies as c ON d.company_id = c.company_id
-      JOIN users as u ON d.owner_id = u.user_id
-      JOIN contacts as ct ON d.contact_id = ct.contact_id
-      WHERE d.deal_id = :id
-    ');
+            SELECT 
+                d.*, 
+                c.name as company_name, 
+                c.company_id,
+                u.name as owner_name, 
+                u.division_id as owner_division_id,
+                ct.name as contact_name,
+                ct.email as contact_email,
+                ct.phone as contact_phone
+            FROM deals as d
+            JOIN companies as c ON d.company_id = c.company_id
+            JOIN users as u ON d.owner_id = u.user_id
+            JOIN contacts as ct ON d.contact_id = ct.contact_id
+            WHERE d.deal_id = :id
+        ');
     $this->db->bind(':id', $id);
     return $this->db->single();
   }
 
-  public function getProductsByDealId($id)
+  public function getProductsByPeluangId($deal_id)
   {
     $this->db->query('
-      SELECT 
-        p.*, 
-        dp.quantity, 
-        dp.price_per_unit,
-        (dp.quantity * dp.price_per_unit) as total_price
-      FROM deal_products as dp
-      JOIN products as p ON dp.product_id = p.product_id
-      WHERE dp.deal_id = :id
-      ORDER BY p.name ASC
-    ');
-    $this->db->bind(':id', $id);
+            SELECT 
+                p.*, 
+                dp.quantity, 
+                dp.price_per_unit,
+                (dp.quantity * dp.price_per_unit) as total_price
+            FROM deal_products as dp
+            JOIN products as p ON dp.product_id = p.product_id
+            WHERE dp.deal_id = :deal_id
+            ORDER BY p.name ASC
+        ');
+    $this->db->bind(':deal_id', $deal_id);
     return $this->db->resultSet();
   }
 
-  public function addDeal($data)
+  public function addPeluang($data)
   {
     $this->db->query('
-      INSERT INTO deals (name, stage, value, owner_id, company_id, contact_id, expected_close_date, created_at, updated_at) 
-      VALUES (:name, :stage, :value, :owner_id, :company_id, :contact_id, :expected_close_date, NOW(), NOW())
-    ');
+            INSERT INTO deals (name, stage, value, owner_id, company_id, contact_id, expected_close_date, created_at, updated_at) 
+            VALUES (:name, :stage, :value, :owner_id, :company_id, :contact_id, :expected_close_date, NOW(), NOW())
+        ');
     $this->db->bind(':name', $data['name']);
     $this->db->bind(':stage', $data['stage']);
     $this->db->bind(':value', $data['value']);
     $this->db->bind(':owner_id', $data['owner_id']);
     $this->db->bind(':company_id', $data['company_id']);
     $this->db->bind(':contact_id', $data['contact_id']);
-    $this->db->bind(':expected_close_date', $data['expected_close_date']);
+    $this->db->bind(':expected_close_date', $data['expected_close_date'] ?? null);
 
     if ($this->db->execute()) {
       return $this->db->lastInsertId();
@@ -158,19 +153,19 @@ class DealModel
     return false;
   }
 
-  public function updateDeal($data)
+  public function updatePeluang($data)
   {
     $this->db->query('
-      UPDATE deals SET 
-        name = :name, 
-        stage = :stage, 
-        value = :value, 
-        contact_id = :contact_id, 
-        expected_close_date = :expected_close_date,
-        requirements_notes = :requirements_notes, -- Tambahkan kolom baru
-        updated_at = NOW()
-      WHERE deal_id = :id
-    ');
+            UPDATE deals SET 
+                name = :name, 
+                stage = :stage, 
+                value = :value, 
+                contact_id = :contact_id, 
+                expected_close_date = :expected_close_date,
+                requirements_notes = :requirements_notes,
+                updated_at = NOW()
+            WHERE deal_id = :id
+        ');
 
     $this->db->bind(':id', $data['id']);
     $this->db->bind(':name', $data['name']);
@@ -178,15 +173,15 @@ class DealModel
     $this->db->bind(':value', $data['value']);
     $this->db->bind(':contact_id', $data['contact_id']);
     $this->db->bind(':expected_close_date', $data['expected_close_date']);
-    $this->db->bind(':requirements_notes', $data['requirements_notes']); // Bind data baru
+    $this->db->bind(':requirements_notes', $data['requirements_notes']);
     return $this->db->execute();
   }
 
-  public function deleteDeal($id)
+  public function deletePeluang($id)
   {
     $this->db->beginTransaction();
     try {
-      $this->removeProductsFromDeal($id);
+      $this->removeProductsFromPeluang($id);
       $this->db->query('DELETE FROM deals WHERE deal_id = :id');
       $this->db->bind(':id', $id);
       $this->db->execute();
@@ -199,7 +194,7 @@ class DealModel
     }
   }
 
-  public function addMultipleProductsToDeal($deal_id, $products)
+  public function addMultipleProductsToPeluang($deal_id, $products)
   {
     if (empty($products)) return true;
     $this->db->beginTransaction();
@@ -221,14 +216,14 @@ class DealModel
     }
   }
 
-  public function removeProductsFromDeal($deal_id)
+  public function removeProductsFromPeluang($deal_id)
   {
     $this->db->query('DELETE FROM deal_products WHERE deal_id = :deal_id');
     $this->db->bind(':deal_id', $deal_id);
     return $this->db->execute();
   }
 
-  public function updateDealStage($deal_id, $new_stage)
+  public function updatePeluangStage($deal_id, $new_stage)
   {
     $allowed_stages = ['Analisis Kebutuhan', 'Proposal', 'Negosiasi', 'Menang', 'Kalah'];
     if (!in_array($new_stage, $allowed_stages)) {
@@ -240,16 +235,16 @@ class DealModel
     return $this->db->execute();
   }
 
-  public function checkDealAccess($deal_id, $user_id, $user_role_id = null, $user_division_id = null)
+  public function checkPeluangAccess($deal_id, $user_id, $user_role_id = null, $user_division_id = null)
   {
     $this->db->query('SELECT d.owner_id, u.division_id as owner_division_id FROM deals as d JOIN users as u ON d.owner_id = u.user_id WHERE d.deal_id = :deal_id');
     $this->db->bind(':deal_id', $deal_id);
     $deal = $this->db->single();
 
     if (!$deal) return false;
-    if (in_array($user_role_id, [1, 2])) return true; // Super Admin & Admin
-    if (in_array($user_role_id, [3, 4, 5]) && $deal->owner_division_id == $user_division_id) return true; // Manajer/SPV
-    if ($user_role_id == 6 && $deal->owner_id == $user_id) return true; // Staf
+    if (in_array($user_role_id, [1, 2])) return true;
+    if (in_array($user_role_id, [3, 4, 5]) && $deal->owner_division_id == $user_division_id) return true;
+    if ($user_role_id == 6 && $deal->owner_id == $user_id) return true;
 
     return false;
   }

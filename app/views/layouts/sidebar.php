@@ -9,15 +9,15 @@
     <?php endif; ?>
 
     <?php if (can('read', 'deals')) : ?>
-      <li><a href="<?= BASE_URL; ?>/deals/kanban" class="list-group-item list-group-item-action <?= isActive('deals/kanban') ? 'active' : ''; ?>" title="Kanban Peluang"><i class="bi bi-kanban-fill"></i><span class="menu-text">Kanban Peluang</span></a></li>
+      <li><a href="<?= BASE_URL; ?>/peluang/kanban" class="list-group-item list-group-item-action <?= isActive('peluang/kanban') ? 'active' : ''; ?>" title="Kanban Peluang"><i class="bi bi-kanban-fill"></i><span class="menu-text">Kanban Peluang</span></a></li>
     <?php endif; ?>
 
     <?php if (can('read', 'leads')) : ?>
-      <li><a href="<?= BASE_URL; ?>/leads" class="list-group-item list-group-item-action <?= isActive('leads'); ?>" title="Prospek"><i class="bi bi-person-lines-fill"></i><span class="menu-text">Prospek</span></a></li>
+      <li><a href="<?= BASE_URL; ?>/prospek" class="list-group-item list-group-item-action <?= isActive('prospek'); ?>" title="Prospek"><i class="bi bi-person-lines-fill"></i><span class="menu-text">Prospek</span></a></li>
     <?php endif; ?>
 
     <?php if (can('read', 'deals')) : ?>
-      <li><a href="<?= BASE_URL; ?>/deals" class="list-group-item list-group-item-action <?= (isActive('deals') && !isActive('deals/kanban')) ? 'active' : ''; ?>" title="Peluang"><i class="bi bi-briefcase-fill"></i><span class="menu-text">Peluang</span></a></li>
+      <li><a href="<?= BASE_URL; ?>/peluang" class="list-group-item list-group-item-action <?= (isActive('peluang') && !isActive('peluang/kanban')) ? 'active' : ''; ?>" title="Peluang"><i class="bi bi-briefcase-fill"></i><span class="menu-text">Peluang</span></a></li>
     <?php endif; ?>
 
     <?php if (can('read', 'instansi')) : ?>

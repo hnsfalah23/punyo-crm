@@ -86,7 +86,7 @@
     <h1 class="mt-4">Detail Prospek</h1>
     <ol class="breadcrumb mb-0 mt-4 bg-transparent">
       <li class="breadcrumb-item"><a href="<?= BASE_URL; ?>/dashboard">Dashboard</a></li>
-      <li class="breadcrumb-item"><a href="<?= BASE_URL; ?>/leads">Manajemen Prospek</a></li>
+      <li class="breadcrumb-item"><a href="<?= BASE_URL; ?>/prospek">Manajemen Prospek</a></li>
       <li class="breadcrumb-item active"><?= htmlspecialchars($data['lead']->name); ?></li>
     </ol>
   </div>
@@ -135,21 +135,26 @@
                   <div class="w-100">
                     <div class="d-flex justify-content-between">
                       <h6 class="mb-0"><?= htmlspecialchars($activity->name); ?></h6>
-                      <?php if (can('update', 'leads') || can('delete', 'leads')): ?>
-                        <div>
-                          <?php if (can('update', 'leads')): ?>
-                            <button class="btn btn-sm btn-outline-warning border-0 p-1 edit-activity-btn" data-bs-toggle="modal" data-bs-target="#editActivityModal" data-id="<?= $activity->activity_id ?>" data-name="<?= htmlspecialchars($activity->name) ?>" data-type="<?= htmlspecialchars($activity->type) ?>" data-start-date="<?= date('Y-m-d', strtotime($activity->start_time)) ?>" data-start-time="<?= date('H:i', strtotime($activity->start_time)) ?>" data-end-date="<?= $activity->end_time ? date('Y-m-d', strtotime($activity->end_time)) : '' ?>" data-end-time="<?= $activity->end_time ? date('H:i', strtotime($activity->end_time)) : '' ?>" data-description="<?= htmlspecialchars($activity->description) ?>" data-photo="<?= $activity->documentation_photo ? BASE_URL . '/uploads/activities/' . $activity->documentation_photo : '' ?>"><i class="bi bi-pencil-fill"></i></button>
-                          <?php endif; ?>
-                          <?php if (can('delete', 'leads')): ?>
-                            <form action="<?= BASE_URL; ?>/activities/delete/<?= $activity->activity_id; ?>" method="post" class="d-inline form-delete" data-item-name="<?= htmlspecialchars($activity->name); ?>"><input type="hidden" name="redirect_url" value="<?= BASE_URL; ?>/leads/detail/<?= $data['lead']->lead_id; ?>"><button type="submit" class="btn btn-sm btn-outline-danger border-0 p-1"><i class="bi bi-trash"></i></button></form>
-                          <?php endif; ?>
-                        </div>
-                      <?php endif; ?>
+                      <div>
+                        <?php if (can('update', 'activities')): ?>
+                          <button class="btn btn-sm btn-outline-warning border-0 p-1 edit-activity-btn" data-id="<?= $activity->activity_id ?>"><i class="bi bi-pencil-fill"></i></button>
+                        <?php endif; ?>
+                        <?php if (can('delete', 'activities')): ?>
+                          <button class="btn btn-sm btn-outline-danger border-0 p-1 delete-activity-btn" data-id="<?= $activity->activity_id ?>" data-name="<?= htmlspecialchars($activity->name) ?>"><i class="bi bi-trash"></i></button>
+                        <?php endif; ?>
+                      </div>
                     </div>
                     <small class="text-muted d-block mb-2"><?= date('d M Y, H:i', strtotime($activity->start_time)); ?> oleh <?= htmlspecialchars($activity->owner_name); ?></small>
                     <div class="p-3 bg-light rounded mt-2">
-                      <?php if (!empty($activity->description)): ?><p class="mb-1 fst-italic">"<?= nl2br(htmlspecialchars($activity->description)); ?>"</p><?php endif; ?>
-                      <?php if ($activity->documentation_photo): ?><?php if (!empty($activity->description)) echo '<hr>'; ?><a href="<?= BASE_URL; ?>/uploads/activities/<?= $activity->documentation_photo; ?>" target="_blank"><img src="<?= BASE_URL; ?>/uploads/activities/<?= $activity->documentation_photo; ?>" alt="Dokumentasi" class="img-fluid rounded mt-2" style="max-height: 150px;"></a><?php endif; ?>
+                      <?php if (!empty($activity->description)): ?>
+                        <p class="mb-1 fst-italic">"<?= nl2br(htmlspecialchars($activity->description)); ?>"</p>
+                      <?php endif; ?>
+                      <?php if ($activity->documentation_photo): ?>
+                        <?php if (!empty($activity->description)) echo '<hr>'; ?>
+                        <a href="<?= BASE_URL; ?>/uploads/activities/<?= $activity->documentation_photo; ?>" target="_blank">
+                          <img src="<?= BASE_URL; ?>/uploads/activities/<?= $activity->documentation_photo; ?>" alt="Dokumentasi" class="img-fluid rounded mt-2" style="max-height: 150px;">
+                        </a>
+                      <?php endif; ?>
                     </div>
                   </div>
                 </div>
@@ -162,15 +167,17 @@
   </div>
 </div>
 
+<!-- Modal Tambah Aktivitas -->
 <div class="modal fade" id="addActivityModal" tabindex="-1">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">Tambah Aktivitas Baru</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
-      <form action="<?= BASE_URL; ?>/activities/add" method="POST" enctype="multipart/form-data">
+      <form id="addActivityForm" method="POST" enctype="multipart/form-data">
         <div class="modal-body">
-          <input type="hidden" name="related_item_id" value="<?= $data['lead']->lead_id; ?>"><input type="hidden" name="related_item_type" value="lead"><input type="hidden" name="redirect_url" value="<?= BASE_URL; ?>/leads/detail/<?= $data['lead']->lead_id; ?>">
+          <input type="hidden" name="related_item_id" value="<?= $data['lead']->lead_id; ?>">
+          <input type="hidden" name="related_item_type" value="lead">
           <div class="mb-3"><label class="form-label">Nama Aktivitas</label><input type="text" class="form-control" name="name" required></div>
           <div class="mb-3"><label class="form-label">Jenis</label><select name="type" class="form-select" required>
               <option value="Tugas">Tugas</option>
@@ -195,6 +202,7 @@
   </div>
 </div>
 
+<!-- Modal Edit Prospek -->
 <div class="modal fade" id="editLeadModal" tabindex="-1">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -203,7 +211,6 @@
       </div>
       <form id="editLeadForm" method="POST">
         <div class="modal-body">
-          <input type="hidden" name="redirect_url" value="<?= BASE_URL; ?>/leads/detail/<?= $data['lead']->lead_id; ?>">
           <div class="form-floating mb-3"><input type="text" id="edit_name" name="name" class="form-control" placeholder="Nama Prospek" required><label>Nama Prospek</label></div>
           <div class="form-floating mb-3"><input type="text" id="edit_company_name" name="company_name" class="form-control" placeholder="Nama Instansi"><label>Nama Instansi</label></div>
           <div class="form-floating mb-3"><input type="email" id="edit_email" name="email" class="form-control" placeholder="Email"><label>Email</label></div>
@@ -222,6 +229,7 @@
   </div>
 </div>
 
+<!-- Modal Edit Aktivitas -->
 <div class="modal fade" id="editActivityModal" tabindex="-1">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -230,7 +238,6 @@
       </div>
       <form id="editActivityForm" method="POST" enctype="multipart/form-data">
         <div class="modal-body">
-          <input type="hidden" name="redirect_url" value="<?= BASE_URL; ?>/leads/detail/<?= $data['lead']->lead_id; ?>">
           <div class="mb-3"><label class="form-label">Nama Aktivitas</label><input type="text" id="edit_activity_name" class="form-control" name="name" required></div>
           <div class="mb-3"><label class="form-label">Jenis</label><select id="edit_activity_type" name="type" class="form-select" required>
               <option value="Tugas">Tugas</option>
@@ -259,23 +266,19 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', function() {
-    // Inisialisasi semua modal
     const editLeadModal = new bootstrap.Modal(document.getElementById('editLeadModal'));
-    const editActivityModal = new bootstrap.Modal(document.getElementById('editActivityModal'));
     const editLeadForm = document.getElementById('editLeadForm');
-    const editActivityForm = document.getElementById('editActivityForm');
     const editStatusSelect = document.getElementById('edit_status');
     let originalStatus = '';
 
-    // Event listener untuk tombol Edit Prospek
     document.querySelectorAll('.edit-lead-btn').forEach(button => {
       button.addEventListener('click', function() {
         const leadId = this.dataset.id;
-        fetch(`<?= BASE_URL ?>/leads/getLeadJson/${leadId}`)
+        fetch(`<?= BASE_URL ?>/prospek/getProspekJson/${leadId}`)
           .then(response => response.json())
           .then(data => {
             if (data) {
-              editLeadForm.action = `<?= BASE_URL ?>/leads/edit/${leadId}`;
+              editLeadForm.action = `<?= BASE_URL ?>/prospek/edit/${leadId}`;
               document.getElementById('edit_name').value = data.name;
               document.getElementById('edit_company_name').value = data.company_name;
               document.getElementById('edit_email').value = data.email;
@@ -289,68 +292,160 @@
       });
     });
 
-    // Event listener untuk submit form Edit Prospek (untuk cek konversi)
     editLeadForm.addEventListener('submit', function(e) {
+      e.preventDefault();
       const newStatus = editStatusSelect.value;
+      const submitForm = () => {
+        handleAjaxFormSubmit(editLeadForm, editLeadForm.action, 'Data prospek berhasil diperbarui.', editLeadModal);
+      };
+
       if (newStatus === 'Kualifikasi' && originalStatus !== 'Kualifikasi') {
-        e.preventDefault();
         Swal.fire({
           title: 'Konversi Prospek?',
-          html: "Status diubah menjadi <strong>Terkualifikasi</strong>. <br>Prospek ini akan dikonversi menjadi <strong>Instansi</strong>, <strong>Kontak</strong>, dan <strong>Peluang</strong> baru.",
+          html: "Status diubah menjadi <strong>Terkualifikasi</strong>. <br>Prospek ini akan dikonversi.",
           icon: 'question',
           showCancelButton: true,
           confirmButtonText: 'Yakin & Konversi',
           cancelButtonText: 'Batal',
-          confirmButtonColor: '#28a745',
         }).then((result) => {
           if (result.isConfirmed) {
-            editLeadForm.submit();
+            submitForm();
           }
         });
+      } else {
+        submitForm();
       }
     });
 
-    // Event listener untuk tombol Edit Aktivitas
+    // --- JAVASCRIPT BARU UNTUK AKTIVITAS ---
+    const addActivityModal = new bootstrap.Modal(document.getElementById('addActivityModal'));
+    const editActivityModal = new bootstrap.Modal(document.getElementById('editActivityModal'));
+    const addActivityForm = document.getElementById('addActivityForm');
+    const editActivityForm = document.getElementById('editActivityForm');
+
+    addActivityForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      handleAjaxFormSubmit(this, '<?= BASE_URL; ?>/activities/add', 'Aktivitas berhasil ditambahkan.', addActivityModal);
+    });
+
     document.querySelectorAll('.edit-activity-btn').forEach(button => {
       button.addEventListener('click', function() {
         const id = this.dataset.id;
-        editActivityForm.action = `<?= BASE_URL ?>/activities/edit/${id}`;
-        document.getElementById('edit_activity_name').value = this.dataset.name;
-        document.getElementById('edit_activity_type').value = this.dataset.type;
-        document.getElementById('edit_start_date').value = this.dataset.startDate;
-        document.getElementById('edit_start_time').value = this.dataset.startTime;
-        document.getElementById('edit_end_date').value = this.dataset.endDate;
-        document.getElementById('edit_end_time').value = this.dataset.endTime;
-        document.getElementById('edit_description').value = this.dataset.description;
-        const photoContainer = document.getElementById('current_photo_container');
-        if (this.dataset.photo) {
-          photoContainer.innerHTML = `<p class="mb-1 small">Foto saat ini:</p><img src="${this.dataset.photo}" style="max-height: 100px;" class="img-fluid rounded">`;
-        } else {
-          photoContainer.innerHTML = '';
-        }
+        fetch(`<?= BASE_URL ?>/activities/getActivityJson/${id}`)
+          .then(response => response.json())
+          .then(result => {
+            if (result.success) {
+              const data = result.data;
+              editActivityForm.action = `<?= BASE_URL ?>/activities/edit/${id}`;
+              document.getElementById('edit_activity_name').value = data.name;
+              document.getElementById('edit_activity_type').value = data.type;
+              document.getElementById('edit_start_date').value = data.start_time.split(' ')[0];
+              document.getElementById('edit_start_time').value = data.start_time.split(' ')[1].substring(0, 5);
+              document.getElementById('edit_end_date').value = data.end_time ? data.end_time.split(' ')[0] : '';
+              document.getElementById('edit_end_time').value = data.end_time ? data.end_time.split(' ')[1].substring(0, 5) : '';
+              document.getElementById('edit_description').value = data.description;
+
+              const photoContainer = document.getElementById('current_photo_container');
+              if (data.documentation_photo) {
+                photoContainer.innerHTML = `<p class="mb-1 small">Foto saat ini:</p><a href="<?= BASE_URL ?>/uploads/activities/${data.documentation_photo}" target="_blank"><img src="<?= BASE_URL ?>/uploads/activities/${data.documentation_photo}" style="max-height: 100px;" class="img-fluid rounded"></a>`;
+              } else {
+                photoContainer.innerHTML = '';
+              }
+              editActivityModal.show();
+            } else {
+              Swal.fire('Error', result.message, 'error');
+            }
+          });
       });
     });
 
-    // Event listener untuk konfirmasi hapus aktivitas
-    document.querySelectorAll('.form-delete').forEach(form => {
-      form.addEventListener('submit', function(e) {
-        e.preventDefault();
-        const itemName = form.dataset.itemName;
+    editActivityForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      handleAjaxFormSubmit(this, this.action, 'Aktivitas berhasil diperbarui.', editActivityModal);
+    });
+
+    document.querySelectorAll('.delete-activity-btn').forEach(button => {
+      button.addEventListener('click', function() {
+        const id = this.dataset.id;
+        const name = this.dataset.name;
         Swal.fire({
           title: 'Apakah Anda yakin?',
-          text: `Anda akan menghapus aktivitas "${itemName}". Tindakan ini tidak dapat dibatalkan.`,
+          text: `Anda akan menghapus aktivitas "${name}".`,
           icon: 'warning',
           showCancelButton: true,
           confirmButtonColor: '#d33',
-          cancelButtonColor: '#6c757d',
-          confirmButtonText: 'Ya, hapus!',
-          cancelButtonText: 'Batal'
+          confirmButtonText: 'Ya, hapus!'
         }).then((result) => {
           if (result.isConfirmed) {
-            form.submit();
+            fetch(`<?= BASE_URL ?>/activities/delete/${id}`, {
+                method: 'POST'
+              })
+              .then(res => res.json())
+              .then(data => {
+                if (data.success) {
+                  Swal.fire({
+                      icon: 'success',
+                      title: 'Dihapus!',
+                      text: data.message,
+                      timer: 1500,
+                      showConfirmButton: false
+                    })
+                    .then(() => location.reload());
+                } else {
+                  Swal.fire('Gagal!', data.message, 'error');
+                }
+              });
           }
         });
       });
     });
+
+    function handleAjaxFormSubmit(form, url, successMessage, modalInstance) {
+      const formData = new FormData(form);
+      const submitButton = form.querySelector('button[type="submit"]');
+
+      submitButton.disabled = true;
+      submitButton.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Menyimpan...`;
+
+      fetch(url, {
+          method: 'POST',
+          body: formData
+        })
+        .then(response => response.json())
+        .then(result => {
+          modalInstance.hide();
+          if (result.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil!',
+                text: successMessage,
+                timer: 2000,
+                showConfirmButton: false
+              })
+              .then(() => {
+                if (result.data && result.data.action === 'redirect') {
+                  window.location.href = result.data.url;
+                } else {
+                  location.reload();
+                }
+              });
+          } else {
+            Swal.fire({
+              icon: 'error',
+              title: 'Gagal',
+              text: result.message
+            });
+          }
+        })
+        .catch(() => Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Tidak dapat terhubung ke server.'
+        }))
+        .finally(() => {
+          submitButton.disabled = false;
+          submitButton.innerHTML = 'Simpan';
+        });
+    }
   });
 </script>

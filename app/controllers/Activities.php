@@ -56,116 +56,111 @@ class Activities extends Controller
 
   public function add()
   {
-    if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-      $itemType = $_POST['related_item_type'];
-      $itemId = $_POST['related_item_id'];
-      $permissionType = ($itemType == 'deal') ? 'deals' : 'leads';
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !can('create', 'activities')) {
+      $this->jsonResponse(false, 'Akses tidak diizinkan.', 403);
+    }
 
-      if (!can('create', $permissionType)) {
-        flash('activity_message', 'Anda tidak memiliki izin untuk menambahkan aktivitas ini.', 'alert alert-danger');
-        header('Location: ' . $_POST['redirect_url']);
-        exit;
-      }
+    $startTime = !empty($_POST['start_date']) && !empty($_POST['start_time']) ? $_POST['start_date'] . ' ' . $_POST['start_time'] : null;
+    $endTime = !empty($_POST['end_date']) && !empty($_POST['end_time']) ? $_POST['end_date'] . ' ' . $_POST['end_time'] : null;
 
-      $photoName = null;
-      if (isset($_FILES['documentation_photo']) && $_FILES['documentation_photo']['error'] == 0) {
-        $targetDir = "uploads/activities/";
-        if (!file_exists($targetDir)) {
-          mkdir($targetDir, 0777, true);
-        }
-        $fileName = uniqid() . '_' . basename($_FILES["documentation_photo"]["name"]);
-        $targetFile = $targetDir . $fileName;
-        if (move_uploaded_file($_FILES["documentation_photo"]["tmp_name"], $targetFile)) {
-          $photoName = $fileName;
-        }
-      }
+    $data = [
+      'name' => trim($_POST['name'] ?? ''),
+      'type' => $_POST['type'] ?? 'Tugas',
+      'description' => trim($_POST['description'] ?? ''),
+      'start_time' => $startTime,
+      'end_time' => $endTime,
+      'owner_id' => $_SESSION['user_id'],
+      'related_item_id' => $_POST['related_item_id'] ?? 0,
+      'related_item_type' => $_POST['related_item_type'] ?? '',
+      'documentation_photo' => $_FILES['documentation_photo'] ?? null
+    ];
 
-      $startTime = $_POST['start_date'] . ' ' . $_POST['start_time'];
-      $endTime = (!empty($_POST['end_date']) && !empty($_POST['end_time'])) ? $_POST['end_date'] . ' ' . $_POST['end_time'] : null;
+    if (empty($data['name']) || empty($data['related_item_id'])) {
+      $this->jsonResponse(false, 'Nama aktivitas dan item terkait harus diisi.');
+      return;
+    }
 
-      $data = [
-        'name' => trim($_POST['name']),
-        'type' => $_POST['type'],
-        'description' => trim($_POST['description']),
-        'start_time' => $startTime,
-        'end_time' => $endTime,
-        'owner_id' => $_SESSION['user_id'],
-        'related_item_id' => $itemId,
-        'related_item_type' => $itemType,
-        'documentation_photo' => $photoName
-      ];
-
+    try {
       if ($this->activityModel->addActivity($data)) {
-        flash('activity_message', 'Aktivitas baru berhasil dicatat.');
+        $this->jsonResponse(true, 'Aktivitas baru berhasil ditambahkan.');
       } else {
-        flash('activity_message', 'Gagal mencatat aktivitas.', 'alert alert-danger');
+        $this->jsonResponse(false, 'Gagal menambahkan aktivitas ke database.');
       }
-
-      // **PERBAIKAN UTAMA DI SINI:** Alihkan ke halaman detail yang sesuai
-      $redirect_url = BASE_URL . '/' . $permissionType . '/detail/' . $itemId;
-      header('Location: ' . $redirect_url);
-      exit;
+    } catch (Exception $e) {
+      $this->jsonResponse(false, 'Terjadi kesalahan pada server: ' . $e->getMessage(), 500);
     }
   }
-
+  
   public function edit($id)
   {
-    if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-      $activity = $this->activityModel->getActivityById($id);
-      $photoName = $activity->documentation_photo;
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !can('update', 'activities')) {
+      $this->jsonResponse(false, 'Akses tidak diizinkan.', 403);
+    }
 
-      if (isset($_FILES['documentation_photo']) && $_FILES['documentation_photo']['error'] == 0) {
-        if ($photoName && file_exists('uploads/activities/' . $photoName)) {
-          unlink('uploads/activities/' . $photoName);
-        }
-        $targetDir = "uploads/activities/";
-        $fileName = uniqid() . '_' . basename($_FILES["documentation_photo"]["name"]);
-        $targetFile = $targetDir . $fileName;
-        move_uploaded_file($_FILES["documentation_photo"]["tmp_name"], $targetFile);
-        $photoName = $fileName;
-      }
+    $startTime = $_POST['start_date'] . ' ' . $_POST['start_time'];
+    $endTime = (!empty($_POST['end_date']) && !empty($_POST['end_time'])) ? $_POST['end_date'] . ' ' . $_POST['end_time'] : null;
 
-      $startTime = $_POST['start_date'] . ' ' . $_POST['start_time'];
-      $endTime = (!empty($_POST['end_date']) && !empty($_POST['end_time'])) ? $_POST['end_date'] . ' ' . $_POST['end_time'] : null;
+    $data = [
+      'id' => $id,
+      'name' => trim($_POST['name']),
+      'type' => $_POST['type'],
+      'description' => trim($_POST['description']),
+      'start_time' => $startTime,
+      'end_time' => $endTime,
+      'documentation_photo' => $_FILES['documentation_photo'] ?? null
+    ];
 
-      $data = [
-        'id' => $id,
-        'name' => trim($_POST['name']),
-        'type' => $_POST['type'],
-        'description' => trim($_POST['description']),
-        'start_time' => $startTime,
-        'end_time' => $endTime,
-        'documentation_photo' => $photoName
-      ];
-
+    try {
       if ($this->activityModel->updateActivity($data)) {
-        flash('activity_message', 'Aktivitas berhasil diupdate.');
+        $this->jsonResponse(true, 'Aktivitas berhasil diperbarui.');
       } else {
-        flash('activity_message', 'Gagal mengupdate aktivitas.', 'alert alert-danger');
+        $this->jsonResponse(false, 'Gagal memperbarui aktivitas.');
       }
-      header('Location: ' . $_POST['redirect_url']);
-      exit;
+    } catch (Exception $e) {
+      $this->jsonResponse(false, 'Terjadi kesalahan pada server: ' . $e->getMessage(), 500);
     }
   }
 
   public function delete($id)
   {
-    if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-      $activity = $this->activityModel->getActivityById($id);
-      if ($activity) {
-        if ($activity->documentation_photo && file_exists('uploads/activities/' . $activity->documentation_photo)) {
-          unlink('uploads/activities/' . $activity->documentation_photo);
-        }
-        if ($this->activityModel->deleteActivity($id)) {
-          flash('activity_message', 'Aktivitas berhasil dihapus.');
-        } else {
-          flash('activity_message', 'Gagal menghapus aktivitas.', 'alert alert-danger');
-        }
-      }
-      $redirect_url = $_POST['redirect_url'] ?? BASE_URL . '/dashboard';
-      header('Location: ' . $redirect_url);
-      exit;
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !can('delete', 'activities')) {
+      $this->jsonResponse(false, 'Akses tidak diizinkan.', 403);
     }
+
+    try {
+      if ($this->activityModel->deleteActivity($id)) {
+        $this->jsonResponse(true, 'Aktivitas berhasil dihapus.');
+      } else {
+        $this->jsonResponse(false, 'Gagal menghapus aktivitas.');
+      }
+    } catch (Exception $e) {
+      $this->jsonResponse(false, 'Terjadi kesalahan pada server: ' . $e->getMessage(), 500);
+    }
+  }
+
+  public function getActivityJson($id)
+  {
+    if (!can('read', 'activities')) {
+      $this->jsonResponse(false, 'Akses tidak diizinkan.', 403);
+    }
+    $activity = $this->activityModel->getActivityById($id);
+    if ($activity) {
+      $this->jsonResponse(true, 'Data ditemukan', 200, (array)$activity);
+    } else {
+      $this->jsonResponse(false, 'Aktivitas tidak ditemukan', 404);
+    }
+  }
+
+  private function jsonResponse($success, $message, $httpCode = 200, $data = [])
+  {
+    if (ob_get_level() > 0) {
+      ob_end_clean();
+    }
+    header('Content-Type: application/json');
+    http_response_code($httpCode);
+    $response = ['success' => $success, 'message' => $message, 'data' => $data];
+    echo json_encode($response);
+    exit;
   }
 
   private function renderView($view, $data = [])

@@ -8,16 +8,23 @@ class Instansi extends Controller
   public function __construct()
   {
     if (!isLoggedIn()) {
-      header('Location: ' . BASE_URL . '/auth/login');
-      exit;
+      if ($this->isAjaxRequest()) {
+        $this->jsonResponse(false, 'Sesi Anda telah berakhir. Silakan login kembali.', 401);
+      } else {
+        header('Location: ' . BASE_URL . '/auth/login');
+        exit;
+      }
     }
     $this->instansiModel = $this->model('InstansiModel');
   }
 
+  /**
+   * Menampilkan halaman utama manajemen instansi.
+   */
   public function index()
   {
     if (!can('read', 'instansi')) {
-      flash('dashboard_message', 'Anda tidak memiliki hak akses.', 'alert alert-danger');
+      flash('dashboard_message', 'Anda tidak memiliki hak akses untuk melihat halaman ini.', 'alert alert-danger');
       header('Location: ' . BASE_URL . '/dashboard');
       exit;
     }
@@ -25,17 +32,11 @@ class Instansi extends Controller
     $search = $_GET['search'] ?? '';
     $filter_industry = $_GET['filter_industry'] ?? '';
     $limit = 10;
-    $page = $_GET['page'] ?? 1;
+    $page = (int) ($_GET['page'] ?? 1);
     $offset = ($page - 1) * $limit;
 
-    $params = [
-      'search' => $search,
-      'filter_industry' => $filter_industry,
-      'limit' => $limit,
-      'offset' => $offset
-    ];
+    $params = compact('search', 'filter_industry', 'limit', 'offset');
 
-    // **PERBAIKAN UTAMA DI SINI:** Menggunakan nama fungsi yang benar
     $instansi = $this->instansiModel->getInstansi($params);
     $totalInstansi = $this->instansiModel->getTotalInstansi($params);
     $totalPages = ceil($totalInstansi / $limit);
@@ -49,177 +50,196 @@ class Instansi extends Controller
       'search' => $search,
       'filter_industry' => $filter_industry,
       'industries' => $this->instansiModel->getDistinctIndustries(),
-      'all_instansi' => $this->instansiModel->getInstansi() // Untuk dropdown di modal
+      'all_instansi' => $this->instansiModel->getInstansi()
     ];
 
     $this->renderView('pages/instansi/index', $data);
   }
 
+  /**
+   * Menampilkan halaman detail instansi.
+   */
   public function detail($id)
   {
     if (!can('read', 'instansi')) {
+      flash('instansi_message', 'Anda tidak memiliki hak akses.', 'alert alert-danger');
       header('Location: ' . BASE_URL . '/instansi');
       exit;
     }
+
     $instansi = $this->instansiModel->getInstansiById($id);
     if (!$instansi) {
+      flash('instansi_message', 'Instansi tidak ditemukan.', 'alert alert-danger');
       header('Location: ' . BASE_URL . '/instansi');
       exit;
     }
 
     $data = [
-      'title' => 'Detail Instansi',
+      'title' => 'Detail Instansi: ' . $instansi->name,
       'instansi' => $instansi,
       'kontak' => $this->instansiModel->getContactsByInstansiId($id),
-      'deals' => $this->instansiModel->getDealsByInstansiId($id)
+      'deals' => $this->instansiModel->getDealsByInstansiId($id),
+      'products' => $this->instansiModel->getProductsByInstansiId($id)
     ];
+
     $this->renderView('pages/instansi/detail', $data);
   }
 
+  /**
+   * Menambahkan instansi baru. Ditangani via AJAX dan mengembalikan JSON.
+   */
   public function add()
   {
-    if (!can('create', 'instansi') || $_SERVER['REQUEST_METHOD'] != 'POST') {
-      header('Location: ' . BASE_URL . '/instansi');
-      exit;
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !can('create', 'instansi')) {
+      $this->jsonResponse(false, 'Akses tidak diizinkan.', 403);
     }
 
-    $data = [
-      'name' => trim($_POST['name']),
-      'website' => trim($_POST['website']),
-      'industry' => trim($_POST['industry']),
-      'description' => trim($_POST['description']),
-      'gmaps_location' => trim($_POST['gmaps_location'])
-    ];
+    $data = $this->sanitizeInput($_POST);
 
     if (empty($data['name'])) {
-      flash('instansi_message', 'Nama instansi tidak boleh kosong.', 'alert alert-danger');
-    } else {
+      $this->jsonResponse(false, 'Nama instansi tidak boleh kosong.');
+    }
+
+    try {
       if ($this->instansiModel->addInstansi($data)) {
-        flash('instansi_message', 'Instansi baru berhasil ditambahkan.');
+        $this->jsonResponse(true, 'Instansi baru berhasil ditambahkan.');
       } else {
-        flash('instansi_message', 'Gagal menambahkan instansi.', 'alert alert-danger');
+        $this->jsonResponse(false, 'Gagal menambahkan instansi ke database.');
       }
+    } catch (PDOException $e) {
+      $this->jsonResponse(false, 'Terjadi kesalahan pada server.', 500);
     }
-    header('Location: ' . BASE_URL . '/instansi');
-    exit;
   }
 
-  public function edit($id = null)
+  /**
+   * Memperbarui data instansi. Ditangani via AJAX.
+   */
+  public function edit()
   {
-    if (!can('update', 'instansi')) {
-      header('Location: ' . BASE_URL . '/instansi');
-      exit;
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !can('update', 'instansi')) {
+      $this->jsonResponse(false, 'Akses tidak diizinkan.', 403);
     }
 
-    if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-      // Jika ada company_id dari modal form, gunakan itu
-      $company_id = $_POST['company_id'] ?? $id;
+    $data = $this->sanitizeInput($_POST);
+    $id = (int) ($data['company_id'] ?? 0);
 
-      if (!$company_id) {
-        flash('instansi_message', 'ID instansi tidak valid.', 'alert alert-danger');
-        header('Location: ' . BASE_URL . '/instansi');
-        exit;
-      }
+    if ($id === 0) {
+      $this->jsonResponse(false, 'ID instansi tidak valid.');
+    }
+    if (empty($data['name'])) {
+      $this->jsonResponse(false, 'Nama instansi tidak boleh kosong.');
+    }
 
-      $data = [
-        'id' => $company_id,
-        'name' => trim($_POST['name']),
-        'website' => trim($_POST['website']),
-        'industry' => trim($_POST['industry']),
-        'description' => trim($_POST['description']),
-        'gmaps_location' => trim($_POST['gmaps_location'])
-      ];
+    $data['id'] = $id;
 
-      if (empty($data['name'])) {
-        flash('instansi_message', 'Nama instansi tidak boleh kosong.', 'alert alert-danger');
+    try {
+      if ($this->instansiModel->updateInstansi($data)) {
+        $this->jsonResponse(true, 'Data instansi berhasil diperbarui.');
       } else {
-        if ($this->instansiModel->updateInstansi($data)) {
-          flash('instansi_message', 'Data instansi berhasil diupdate.');
-        } else {
-          flash('instansi_message', 'Gagal mengupdate instansi.', 'alert alert-danger');
-        }
+        $this->jsonResponse(false, 'Gagal memperbarui data instansi.');
       }
-      header('Location: ' . BASE_URL . '/instansi');
-      exit;
-    }
-
-    // Jika bukan POST request dan ada ID, redirect ke halaman utama
-    // karena sekarang menggunakan modal
-    if ($id) {
-      header('Location: ' . BASE_URL . '/instansi');
-      exit;
+    } catch (PDOException $e) {
+      $this->jsonResponse(false, 'Terjadi kesalahan pada server.', 500);
     }
   }
 
+  /**
+   * Menghapus instansi. Ditangani via AJAX.
+   */
   public function delete($id)
   {
-    if (!can('delete', 'instansi')) {
-      flash('instansi_message', 'Anda tidak memiliki izin untuk menghapus.', 'alert alert-danger');
-      header('Location: ' . BASE_URL . '/instansi');
-      exit;
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !can('delete', 'instansi')) {
+      $this->jsonResponse(false, 'Akses tidak diizinkan.', 403);
     }
 
-    if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-      // Cek apakah ada data terkait
-      $relatedContacts = $this->instansiModel->getContactsByInstansiId($id);
-      $relatedDeals = $this->instansiModel->getDealsByInstansiId($id);
+    $id = (int) $id;
+    if ($id === 0) {
+      $this->jsonResponse(false, 'ID instansi tidak valid.');
+    }
 
-      if (!empty($relatedContacts) || !empty($relatedDeals)) {
-        $errorMessage = 'Gagal menghapus instansi. Masih ada data yang terkait:';
-        if (!empty($relatedContacts)) {
-          $errorMessage .= ' ' . count($relatedContacts) . ' kontak';
-        }
-        if (!empty($relatedDeals)) {
-          $errorMessage .= (!empty($relatedContacts) ? ' dan ' : ' ') . count($relatedDeals) . ' peluang.';
-        }
-
-        flash('instansi_message', $errorMessage, 'alert alert-danger');
-        header('Location: ' . BASE_URL . '/instansi');
-        exit;
+    try {
+      if ($this->instansiModel->hasRelatedData($id)) {
+        $this->jsonResponse(false, 'Gagal menghapus. Instansi masih memiliki kontak atau peluang terkait.');
+        return;
       }
 
       if ($this->instansiModel->deleteInstansi($id)) {
-        flash('instansi_message', 'Instansi berhasil dihapus.');
+        $this->jsonResponse(true, 'Instansi berhasil dihapus.');
       } else {
-        flash('instansi_message', 'Gagal menghapus instansi dari database.', 'alert alert-danger');
+        $this->jsonResponse(false, 'Gagal menghapus instansi dari database.');
       }
+    } catch (PDOException $e) {
+      $this->jsonResponse(false, 'Terjadi kesalahan pada server.', 500);
     }
-
-    header('Location: ' . BASE_URL . '/instansi');
-    exit;
   }
 
-  // Method untuk mendapatkan data instansi via AJAX (opsional)
+  /**
+   * Mengambil data satu instansi untuk form edit via AJAX.
+   */
   public function getInstansiData($id)
   {
     if (!can('read', 'instansi')) {
-      http_response_code(403);
-      echo json_encode(['error' => 'Unauthorized']);
-      exit;
+      $this->jsonResponse(false, 'Akses tidak diizinkan.', 403);
     }
 
-    header('Content-Type: application/json');
-
-    $instansi = $this->instansiModel->getInstansiById($id);
+    $instansi = $this->instansiModel->getInstansiById((int) $id);
 
     if ($instansi) {
-      echo json_encode([
-        'success' => true,
-        'data' => [
-          'company_id' => $instansi->company_id,
-          'name' => $instansi->name,
-          'industry' => $instansi->industry,
-          'website' => $instansi->website,
-          'description' => $instansi->description,
-          'gmaps_location' => $instansi->gmaps_location
-        ]
-      ]);
+      $this->jsonResponse(true, 'Data ditemukan', 200, (array) $instansi);
     } else {
-      echo json_encode([
-        'success' => false,
-        'message' => 'Data instansi tidak ditemukan'
-      ]);
+      $this->jsonResponse(false, 'Data instansi tidak ditemukan.', 404);
     }
+  }
+
+  /**
+   * Mengambil data terkait (kontak/peluang) untuk modal.
+   */
+  public function getRelatedData($id, $type)
+  {
+    if (!can('read', 'instansi')) {
+      $this->jsonResponse(false, 'Akses tidak diizinkan.', 403);
+    }
+
+    $id = (int)$id;
+    $data = [];
+
+    if ($type === 'kontak') {
+      $data = $this->instansiModel->getContactsByInstansiId($id);
+    } elseif ($type === 'peluang') {
+      $data = $this->instansiModel->getDealsByInstansiId($id);
+    } else {
+      $this->jsonResponse(false, 'Tipe data tidak valid.', 400);
+    }
+
+    $this->jsonResponse(true, 'Data berhasil diambil', 200, $data);
+  }
+
+  private function isAjaxRequest()
+  {
+    return !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest';
+  }
+
+  private function sanitizeInput($postData)
+  {
+    return [
+      'company_id' => $postData['company_id'] ?? null,
+      'name' => trim($postData['name'] ?? ''),
+      'website' => trim($postData['website'] ?? ''),
+      'industry' => trim($postData['industry'] ?? ''),
+      'description' => trim($postData['description'] ?? ''),
+      'gmaps_location' => trim($postData['gmaps_location'] ?? '')
+    ];
+  }
+
+  private function jsonResponse($success, $message, $httpCode = 200, $data = [])
+  {
+    header('Content-Type: application/json');
+    http_response_code($httpCode);
+    $response = ['success' => $success, 'message' => $message];
+    if (!empty($data)) {
+      $response['data'] = $data;
+    }
+    echo json_encode($response);
     exit;
   }
 

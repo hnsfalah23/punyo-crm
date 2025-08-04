@@ -77,7 +77,7 @@
   <div class="card mb-4">
     <div class="card-body">
       <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
-        <form action="<?= BASE_URL; ?>/leads" method="GET" class="d-flex flex-wrap">
+        <form action="<?= BASE_URL; ?>/prospek" method="GET" class="d-flex flex-wrap">
           <div class="me-2 mb-2">
             <div class="input-group"><input type="text" name="search" class="form-control" placeholder="Cari nama atau instansi..." value="<?= htmlspecialchars($data['search']); ?>"><button class="btn btn-outline-secondary" type="submit"><i class="bi bi-search"></i></button></div>
           </div>
@@ -102,8 +102,7 @@
             <tr>
               <th>Nama Prospek</th>
               <th>Nama Instansi</th>
-              <th>Email</th>
-              <th>Telepon</th>
+              <th>Email & Telepon</th>
               <th>Status</th>
               <th>Pemilik</th>
               <th class="text-center">Aksi</th>
@@ -112,29 +111,23 @@
           <tbody>
             <?php if (empty($data['leads'])): ?>
               <tr>
-                <td colspan="7" class="text-center py-5">Tidak ada data prospek yang ditemukan.</td>
+                <td colspan="6" class="text-center py-5">Tidak ada data prospek yang ditemukan.</td>
               </tr>
             <?php else: ?>
               <?php foreach ($data['leads'] as $lead) : ?>
                 <tr>
-                  <td><a href="<?= BASE_URL; ?>/leads/detail/<?= $lead->lead_id; ?>" class="fw-bold text-decoration-none"><?= htmlspecialchars($lead->name); ?></a></td>
+                  <td><a href="<?= BASE_URL; ?>/prospek/detail/<?= $lead->lead_id; ?>" class="fw-bold text-decoration-none"><?= htmlspecialchars($lead->name); ?></a></td>
                   <td><?= htmlspecialchars($lead->company_name); ?></td>
-                  <td class="text-center">
+                  <td>
                     <?php if (!empty($lead->email)):
                       $subject = urlencode("Penawaran dari PT. Sriwijaya Internet Services");
                       $body = urlencode("Dengan hormat, Bapak/Ibu " . htmlspecialchars($lead->name) . ",\n\n[Isi email Anda di sini...]\n\nTerima kasih,\n" . $_SESSION['user_name']);
                       $gmail_url = "https://mail.google.com/mail/?view=cm&fs=1&to=" . htmlspecialchars($lead->email) . "&su=" . $subject . "&body=" . $body;
                     ?>
-                      <a href="<?= $gmail_url; ?>" target="_blank" class="contact-icon" title="Kirim Email via Gmail">
-                        <i class="bi bi-envelope-fill"></i>
-                      </a>
+                      <a href="<?= $gmail_url; ?>" target="_blank" class="contact-icon me-2" title="Kirim Email via Gmail"><i class="bi bi-envelope-fill"></i></a>
                     <?php endif; ?>
-                  </td>
-                  <td class="text-center">
                     <?php if (!empty($lead->phone)): ?>
-                      <a href="https://wa.me/<?= preg_replace('/[^0-9]/', '', $lead->phone); ?>" target="_blank" class="contact-icon" title="Hubungi via WhatsApp">
-                        <i class="bi bi-whatsapp"></i>
-                      </a>
+                      <a href="https://wa.me/<?= preg_replace('/[^0-9]/', '', $lead->phone); ?>" target="_blank" class="contact-icon" title="Hubungi via WhatsApp"><i class="bi bi-whatsapp"></i></a>
                     <?php endif; ?>
                   </td>
                   <td>
@@ -154,14 +147,16 @@
                   </td>
                   <td class="text-center">
                     <?php if ($lead->status != 'Kualifikasi' && can('create', 'deals')): ?>
-                      <button class="btn btn-success btn-sm action-btn quick-convert-btn" title="Konversi" data-id="<?= $lead->lead_id; ?>" data-name="<?= htmlspecialchars($lead->name); ?>"><i class="bi bi-arrow-repeat"></i></button>
+                      <form action="<?= BASE_URL; ?>/prospek/convert/<?= $lead->lead_id; ?>" method="post" class="d-inline form-convert" data-item-name="<?= htmlspecialchars($lead->name); ?>">
+                        <button type="submit" class="btn btn-success btn-sm action-btn" title="Konversi"><i class="bi bi-arrow-repeat"></i></button>
+                      </form>
                     <?php endif; ?>
-                    <a href="<?= BASE_URL; ?>/leads/detail/<?= $lead->lead_id; ?>" class="btn btn-info btn-sm text-white action-btn" title="Detail"><i class="bi bi-eye-fill"></i></a>
+                    <a href="<?= BASE_URL; ?>/prospek/detail/<?= $lead->lead_id; ?>" class="btn btn-info btn-sm text-white action-btn" title="Detail"><i class="bi bi-eye-fill"></i></a>
                     <?php if (can('update', 'leads')): ?>
                       <button type="button" class="btn btn-warning btn-sm text-white action-btn edit-lead-btn" title="Edit" data-id="<?= $lead->lead_id; ?>"><i class="bi bi-pencil-fill"></i></button>
                     <?php endif; ?>
                     <?php if (can('delete', 'leads')): ?>
-                      <form action="<?= BASE_URL; ?>/leads/delete/<?= $lead->lead_id; ?>" method="post" class="d-inline form-delete" data-item-name="<?= htmlspecialchars($lead->name); ?>"><button type="submit" class="btn btn-danger btn-sm action-btn" title="Hapus"><i class="bi bi-trash-fill"></i></button></form>
+                      <form action="<?= BASE_URL; ?>/prospek/delete/<?= $lead->lead_id; ?>" method="post" class="d-inline form-delete" data-item-name="<?= htmlspecialchars($lead->name); ?>"><button type="submit" class="btn btn-danger btn-sm action-btn" title="Hapus"><i class="bi bi-trash-fill"></i></button></form>
                     <?php endif; ?>
                   </td>
                 </tr>
@@ -191,19 +186,20 @@
   </div>
 </div>
 
+<!-- Modal Tambah Prospek -->
 <div class="modal fade" id="addLeadModal" tabindex="-1">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">Tambah Prospek Baru</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
-      <form action="<?= BASE_URL; ?>/leads/add" method="POST" id="addLeadForm">
+      <form action="<?= BASE_URL; ?>/prospek/add" method="POST">
         <div class="modal-body">
           <div class="form-floating mb-3"><input type="text" name="name" class="form-control" placeholder="Nama Prospek" required><label>Nama Prospek</label></div>
           <div class="form-floating mb-3"><input type="text" name="company_name" class="form-control" placeholder="Nama Instansi"><label>Nama Instansi</label></div>
           <div class="form-floating mb-3"><input type="email" name="email" class="form-control" placeholder="Email"><label>Email</label></div>
           <div class="form-floating mb-3"><input type="tel" name="phone" class="form-control" placeholder="Telepon"><label>Telepon</label></div>
-          <div class="form-floating mb-3"><select name="status" id="add_status" class="form-select">
+          <div class="form-floating mb-3"><select name="status" class="form-select">
               <option value="Baru" selected>Baru</option>
               <option value="Koordinasi">Koordinasi</option>
               <option value="Kualifikasi">Kualifikasi</option>
@@ -217,6 +213,7 @@
   </div>
 </div>
 
+<!-- Modal Edit Prospek -->
 <div class="modal fade" id="editLeadModal" tabindex="-1">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -225,7 +222,6 @@
       </div>
       <form id="editLeadForm" method="POST">
         <div class="modal-body">
-          <input type="hidden" name="redirect_url" value="<?= BASE_URL; ?>/leads">
           <div class="form-floating mb-3"><input type="text" id="edit_name" name="name" class="form-control" placeholder="Nama Prospek" required><label>Nama Prospek</label></div>
           <div class="form-floating mb-3"><input type="text" id="edit_company_name" name="company_name" class="form-control" placeholder="Nama Instansi"><label>Nama Instansi</label></div>
           <div class="form-floating mb-3"><input type="email" id="edit_email" name="email" class="form-control" placeholder="Email"><label>Email</label></div>
@@ -244,18 +240,19 @@
   </div>
 </div>
 
+<!-- Modal Tambah Aktivitas -->
 <div class="modal fade" id="addActivityModal" tabindex="-1">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">Tambah Aktivitas Baru</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
-      <form action="<?= BASE_URL; ?>/activities/add" method="POST" enctype="multipart/form-data">
+      <form id="addActivityForm" method="POST" enctype="multipart/form-data">
         <div class="modal-body">
           <div class="mb-3"><label class="form-label">Terkait Prospek</label><select name="related_item_id" class="form-select" required>
-              <option value="" disabled selected>Pilih Prospek...</option><?php foreach ($data['all_leads_for_activity'] as $lead): ?><option value="<?= $lead->lead_id ?>"><?= htmlspecialchars($lead->name) ?> (<?= htmlspecialchars($lead->company_name) ?>)</option><?php endforeach; ?>
+              <option value="" disabled selected>Pilih Prospek...</option><?php foreach ($data['leads'] as $lead): ?><option value="<?= $lead->lead_id ?>"><?= htmlspecialchars($lead->name) ?> (<?= htmlspecialchars($lead->company_name) ?>)</option><?php endforeach; ?>
             </select></div>
-          <input type="hidden" name="related_item_type" value="lead"><input type="hidden" name="redirect_url" value="<?= BASE_URL; ?>/leads">
+          <input type="hidden" name="related_item_type" value="lead">
           <div class="mb-3"><label class="form-label">Nama Aktivitas</label><input type="text" class="form-control" name="name" required></div>
           <div class="mb-3"><label class="form-label">Jenis</label><select name="type" class="form-select" required>
               <option value="Tugas">Tugas</option>
@@ -280,108 +277,133 @@
   </div>
 </div>
 
-<form id="quick-convert-form" method="post" class="d-none"></form>
-
 <script>
   document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.quick-convert-btn').forEach(button => {
-      button.addEventListener('click', function() {
-        const leadId = this.dataset.id;
-        const leadName = this.dataset.name;
-        const form = document.getElementById('quick-convert-form');
+    const editModal = new bootstrap.Modal(document.getElementById('editLeadModal'));
+    const editForm = document.getElementById('editLeadForm');
+    const editStatusSelect = document.getElementById('edit_status');
+    let originalStatus = '';
 
+    // Fungsi untuk membuka modal edit
+    window.openEditModal = function(id) {
+      fetch(`<?= BASE_URL ?>/prospek/getProspekJson/${id}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data) {
+            editForm.action = `<?= BASE_URL ?>/prospek/edit/${id}`;
+            document.getElementById('edit_name').value = data.name || '';
+            document.getElementById('edit_company_name').value = data.company_name || '';
+            document.getElementById('edit_email').value = data.email || '';
+            document.getElementById('edit_phone').value = data.phone || '';
+            editStatusSelect.value = data.status || 'Baru';
+            document.getElementById('edit_source').value = data.source || '';
+            originalStatus = data.status;
+            editModal.show();
+          } else {
+            Swal.fire('Error', 'Gagal memuat data prospek.', 'error');
+          }
+        });
+    };
+
+    // Event listener untuk tombol edit di tabel
+    document.querySelectorAll('.edit-lead-btn').forEach(button => {
+      button.addEventListener('click', function() {
+        openEditModal(this.dataset.id);
+      });
+    });
+
+    // Event listener untuk form edit
+    editForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const newStatus = editStatusSelect.value;
+
+      const submitAjaxForm = () => {
+        const formData = new FormData(editForm);
+        const url = editForm.action;
+
+        fetch(url, {
+            method: 'POST',
+            body: formData
+          })
+          .then(response => response.json())
+          .then(result => {
+            editModal.hide();
+            if (result.success) {
+              Swal.fire({
+                icon: 'success',
+                title: 'Berhasil!',
+                text: result.message,
+                timer: 2000,
+                showConfirmButton: false
+              }).then(() => {
+                if (result.data && result.data.action === 'redirect') {
+                  window.location.href = result.data.url;
+                } else {
+                  location.reload();
+                }
+              });
+            } else {
+              Swal.fire({
+                icon: 'error',
+                title: 'Gagal',
+                text: result.message
+              });
+            }
+          })
+          .catch(() => Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Tidak dapat terhubung ke server.'
+          }));
+      };
+
+      if (newStatus === 'Kualifikasi' && originalStatus !== 'Kualifikasi') {
         Swal.fire({
-          title: 'Apakah anda yakin ingin mengkonversi prospek ini?',
-          html: `Tindakan ini akan mengubah prospek menjadi <strong>Peluang</strong> dan <strong>Instansi</strong> baru dalam sistem. Pastikan semua informasi telah diperiksa sebelum melanjutkan.`,
+          title: 'Konversi Prospek?',
+          html: "Status diubah menjadi <strong>Terkualifikasi</strong>. <br>Tindakan ini akan mengubah prospek menjadi <strong>Peluang</strong>, <strong>Instansi</strong>, dan <strong>Kontak</strong> baru.",
           icon: 'question',
           showCancelButton: true,
-          confirmButtonText: 'Yakin',
-          cancelButtonText: 'Batal',
-          confirmButtonColor: '#28a745',
-          cancelButtonColor: '#6c757d',
+          confirmButtonText: 'Yakin & Konversi',
+          cancelButtonText: 'Batal'
         }).then((result) => {
           if (result.isConfirmed) {
-            form.action = `<?= BASE_URL; ?>/leads/quickConvert/${leadId}`;
+            submitAjaxForm();
+          }
+        });
+      } else {
+        submitAjaxForm();
+      }
+    });
+
+    // Event listener untuk form konversi
+    document.querySelectorAll('.form-convert').forEach(form => {
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const itemName = form.dataset.itemName;
+        Swal.fire({
+          title: 'Konversi Prospek?',
+          html: `Anda akan mengonversi <strong>${itemName}</strong>. <br>Tindakan ini akan mengubah prospek menjadi <strong>Peluang</strong>, <strong>Instansi</strong>, dan <strong>Kontak</strong> baru.`,
+          icon: 'question',
+          showCancelButton: true,
+          confirmButtonText: 'Ya, Konversi',
+          cancelButtonText: 'Batal',
+          confirmButtonColor: '#28a745'
+        }).then((result) => {
+          if (result.isConfirmed) {
             form.submit();
           }
         });
       });
     });
 
-    // 2. Script untuk Modal Edit
-    const editModal = new bootstrap.Modal(document.getElementById('editLeadModal'));
-    const editForm = document.getElementById('editLeadForm');
-    const editStatusSelect = document.getElementById('edit_status');
-    let originalStatus = '';
-    document.querySelectorAll('.edit-lead-btn').forEach(button => {
-      button.addEventListener('click', function() {
-        const leadId = this.dataset.id;
-        fetch(`<?= BASE_URL ?>/leads/getLeadJson/${leadId}`)
-          .then(response => response.json())
-          .then(data => {
-            if (data) {
-              editForm.action = `<?= BASE_URL ?>/leads/edit/${leadId}`;
-              document.getElementById('edit_name').value = data.name;
-              document.getElementById('edit_company_name').value = data.company_name;
-              document.getElementById('edit_email').value = data.email;
-              document.getElementById('edit_phone').value = data.phone;
-              editStatusSelect.value = data.status;
-              document.getElementById('edit_source').value = data.source;
-              originalStatus = data.status;
-              editModal.show();
-            }
-          });
-      });
-    });
-    editForm.addEventListener('submit', function(e) {
-      if (editStatusSelect.value === 'Kualifikasi' && originalStatus !== 'Kualifikasi') {
-        e.preventDefault();
-        Swal.fire({
-          title: 'Konversi Prospek?',
-          html: "Status diubah menjadi <strong>Terkualifikasi</strong>. <br>Prospek ini akan dikonversi menjadi <strong>Instansi</strong>, <strong>Kontak</strong>, dan <strong>Peluang</strong> baru.",
-          icon: 'question',
-          showCancelButton: true,
-          confirmButtonText: 'Yakin & Konversi',
-          cancelButtonText: 'Batal',
-          confirmButtonColor: '#28a745',
-        }).then((result) => {
-          if (result.isConfirmed) {
-            editForm.submit();
-          }
-        });
-      }
-    });
-
-    // 3. Script untuk Modal Tambah Prospek
-    const addLeadForm = document.getElementById('addLeadForm');
-    const addStatusSelect = document.getElementById('add_status');
-    addLeadForm.addEventListener('submit', function(e) {
-      if (addStatusSelect.value === 'Kualifikasi') {
-        e.preventDefault();
-        Swal.fire({
-          title: 'Konversi Prospek?',
-          html: "Status diatur menjadi <strong>Terkualifikasi</strong>. <br>Prospek ini akan langsung dikonversi menjadi <strong>Instansi</strong>, <strong>Kontak</strong>, dan <strong>Peluang</strong> baru setelah disimpan.",
-          icon: 'question',
-          showCancelButton: true,
-          confirmButtonText: 'Yakin & Konversi',
-          cancelButtonText: 'Batal',
-          confirmButtonColor: '#28a745',
-        }).then((result) => {
-          if (result.isConfirmed) {
-            addLeadForm.submit();
-          }
-        });
-      }
-    });
-
-    // 4. Script untuk Konfirmasi Hapus
+    // Event listener untuk form hapus
     document.querySelectorAll('.form-delete').forEach(form => {
       form.addEventListener('submit', function(e) {
         e.preventDefault();
         const itemName = form.getAttribute('data-item-name');
         Swal.fire({
           title: 'Apakah Anda yakin?',
-          text: `Anda akan menghapus "${itemName}". Tindakan ini tidak dapat dibatalkan!`,
+          text: `Anda akan menghapus "${itemName}".`,
           icon: 'warning',
           showCancelButton: true,
           confirmButtonColor: '#d33',
@@ -394,6 +416,54 @@
           }
         });
       });
+    });
+
+    // Event listener untuk form tambah aktivitas
+    addActivityForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const url = '<?= BASE_URL; ?>/activities/add';
+      const successMessage = 'Aktivitas baru berhasil ditambahkan.';
+
+      const formData = new FormData(this);
+      const submitButton = this.querySelector('button[type="submit"]');
+      const originalButtonText = submitButton.innerHTML;
+      submitButton.disabled = true;
+      submitButton.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Menyimpan...`;
+
+      fetch(url, {
+          method: 'POST',
+          body: formData
+        })
+        .then(response => response.json())
+        .then(result => {
+          const addModal = bootstrap.Modal.getInstance(document.getElementById('addActivityModal'));
+          addModal.hide();
+          if (result.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil!',
+                text: successMessage,
+                timer: 2000,
+                showConfirmButton: false
+              })
+              .then(() => location.reload());
+          } else {
+            Swal.fire({
+              icon: 'error',
+              title: 'Gagal',
+              text: result.message
+            });
+          }
+        })
+        .catch(() => Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Tidak dapat terhubung ke server.'
+        }))
+        .finally(() => {
+          submitButton.disabled = false;
+          submitButton.innerHTML = originalButtonText;
+        });
     });
   });
 </script>

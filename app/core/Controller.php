@@ -1,25 +1,53 @@
 <?php
 // app/core/Controller.php
 
+/**
+ * Controller dasar
+ * Memuat model dan view
+ */
 class Controller
 {
-  // Method untuk memuat view
-  public function view($view, $data = [])
+  /**
+   * Memuat file model dan menginstansiasinya.
+   *
+   * @param string $model Nama kelas model.
+   * @return object Instance dari model.
+   */
+  public function model($model)
   {
-    // Ekstrak data agar bisa diakses sebagai variabel di view
-    extract($data);
+    // Path yang benar untuk memuat model dari direktori app/models/
+    $modelPath = '../app/models/' . $model . '.php';
 
-    if (file_exists('../app/views/' . $view . '.php')) {
-      require_once '../app/views/' . $view . '.php';
+    // Cek apakah file model ada sebelum memuatnya
+    if (file_exists($modelPath)) {
+      require_once $modelPath;
+      // Mengembalikan instance baru dari kelas model
+      return new $model();
     } else {
-      die('View tidak ditemukan: ' . $view);
+      // Hentikan aplikasi jika model tidak ditemukan
+      die('Model tidak ditemukan: ' . $modelPath);
     }
   }
 
-  // Method untuk memuat model
-  public function model($model)
+  /**
+   * Memuat file view.
+   *
+   * @param string $view Nama file view.
+   * @param array $data Data untuk diekstrak menjadi variabel di dalam view.
+   */
+  public function view($view, $data = [])
   {
-    require_once '../app/models/' . $model . '.php';
-    return new $model();
+    // Path ke file view
+    $viewPath = '../app/views/' . $view . '.php';
+
+    if (file_exists($viewPath)) {
+      // Ekstrak data menjadi variabel individual
+      extract($data);
+
+      require_once $viewPath;
+    } else {
+      // Hentikan aplikasi jika view tidak ditemukan
+      die('View tidak ditemukan: ' . $viewPath);
+    }
   }
 }

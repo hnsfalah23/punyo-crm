@@ -43,6 +43,7 @@ class PeluangModel
                 d.*, 
                 c.name as company_name, 
                 u.name as owner_name,
+                u.profile_picture as owner_photo, /* DITAMBAHKAN */
                 ct.name as contact_name,
                 GROUP_CONCAT(DISTINCT p.name SEPARATOR ', ') as product_names
             FROM deals as d

@@ -106,17 +106,33 @@ class Peluang extends Controller
       header('Location: ' . BASE_URL . '/dashboard');
       exit;
     }
+
     $scope = $this->getUserScope();
     $peluang = $this->peluangModel->getPeluang(['scope_type' => $scope['type'], 'scope_value' => $scope['value']]);
-    $dealsByStage = ['Analisis Kebutuhan' => [], 'Proposal' => [], 'Negosiasi' => [], 'Menang' => [], 'Kalah' => []];
+
+    $stages = ['Analisis Kebutuhan', 'Proposal', 'Negosiasi', 'Menang', 'Kalah'];
+    $dealsByStage = array_fill_keys($stages, []);
+    $stageTotals = array_fill_keys($stages, 0);
+
     foreach ($peluang as $deal) {
-      if (array_key_exists($deal->stage, $dealsByStage)) {
-        $dealsByStage[$deal->stage][] = $deal;
+      // PERBAIKAN: Membersihkan nama tahapan dari spasi ekstra
+      $stageKey = trim($deal->stage);
+      if (array_key_exists($stageKey, $dealsByStage)) {
+        $dealsByStage[$stageKey][] = $deal;
+        // PERBAIKAN: Mengubah nilai menjadi angka (float) sebelum menjumlahkan
+        $stageTotals[$stageKey] += (float)$deal->value;
       }
     }
-    $data = ['title' => 'Papan Kanban Peluang', 'dealsByStage' => $dealsByStage];
+
+    $data = [
+      'title' => 'Papan Kanban Peluang',
+      'dealsByStage' => $dealsByStage,
+      'stageTotals' => $stageTotals
+    ];
+
     $this->renderView('pages/peluang/kanban', $data);
   }
+
 
   public function add()
   {
@@ -220,6 +236,7 @@ class Peluang extends Controller
       }
     }
 
+
     $peluang = $this->peluangModel->getPeluangById($id);
     if (!$peluang) {
       header('Location: ' . BASE_URL . '/peluang');
@@ -242,9 +259,13 @@ class Peluang extends Controller
     $this->renderView('pages/peluang/edit', $data);
   }
 
+  /**
+   * Menampilkan halaman "Lengkapi Data" setelah konversi prospek.
+   * @param int $deal_id ID dari peluang yang baru dibuat.
+   */
   public function lengkapi($deal_id)
   {
-    if (!can('update', 'peluang')) {
+    if (!can('update', 'deals')) {
       flash('dashboard_message', 'Anda tidak memiliki hak akses.', 'alert alert-danger');
       header('Location: ' . BASE_URL . '/dashboard');
       exit;
@@ -269,6 +290,7 @@ class Peluang extends Controller
 
     $this->renderView('pages/peluang/lengkapi', $data);
   }
+
 
   public function detail($id)
   {

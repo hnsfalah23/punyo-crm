@@ -70,9 +70,21 @@
     font-weight: 600;
     color: var(--text-primary);
     display: flex;
+    justify-content: space-between;
     align-items: center;
     border-bottom: 1px solid var(--border-color);
     position: relative;
+  }
+
+  .stage-info {
+    display: flex;
+    align-items: center;
+  }
+
+  .stage-total {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #16a34a;
   }
 
   .kanban-column-header::before {
@@ -117,15 +129,36 @@
     background-color: #ef4444;
   }
 
-  /* PERBAIKAN UTAMA DI SINI */
   .kanban-cards {
     padding: 1rem;
     background-color: #f9fafb;
     min-height: 150px;
     max-height: calc(100vh - 280px);
-    /* Menetapkan tinggi maksimal berdasarkan tinggi layar */
     overflow-y: auto;
-    /* Scrollbar akan muncul otomatis jika konten melebihi max-height */
+  }
+
+  .kanban-cards {
+    scrollbar-width: thin;
+    scrollbar-color: #ced4da #f1f3f5;
+  }
+
+  .kanban-cards::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .kanban-cards::-webkit-scrollbar-track {
+    background-color: #f1f3f5;
+    border-radius: 4px;
+  }
+
+  .kanban-cards::-webkit-scrollbar-thumb {
+    background-color: #ced4da;
+    border-radius: 4px;
+    border: 2px solid #f1f3f5;
+  }
+
+  .kanban-cards::-webkit-scrollbar-thumb:hover {
+    background-color: #adb5bd;
   }
 
   .kanban-cards.drag-over {
@@ -142,7 +175,29 @@
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.06);
     border: 1px solid var(--border-color);
     position: relative;
+    border-left-width: 4px;
   }
+
+  .stage-analisis-kebutuhan .kanban-card {
+    border-left-color: #3b82f6;
+  }
+
+  .stage-proposal .kanban-card {
+    border-left-color: #8b5cf6;
+  }
+
+  .stage-negosiasi .kanban-card {
+    border-left-color: #f59e0b;
+  }
+
+  .stage-menang .kanban-card {
+    border-left-color: #10b981;
+  }
+
+  .stage-kalah .kanban-card {
+    border-left-color: #ef4444;
+  }
+
 
   .kanban-card:hover {
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
@@ -208,6 +263,13 @@
     gap: 0.5rem;
   }
 
+  .card-owner-photo {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
   .card-value {
     font-weight: 600;
     color: #059669;
@@ -253,14 +315,19 @@
 
     <?php foreach ($data['dealsByStage'] as $stage => $deals): ?>
       <?php $stageSlug = str_replace(' ', '-', strtolower($stage)); ?>
-      <div class="kanban-column <?= $stageConfig[$stage]['class'] ?? '' ?>">
+      <div class="kanban-column <?= $stageConfig[$stage]['class'] ?? '' ?>" id="column-<?= $stageSlug ?>">
         <div class="kanban-column-header">
-          <span class="stage-name"><?= htmlspecialchars($stage) ?></span>
-          <span class="stage-count" id="count-<?= $stageSlug ?>"><?= count($deals) ?></span>
+          <div class="stage-info">
+            <span class="stage-name"><?= htmlspecialchars($stage) ?></span>
+            <span class="stage-count" id="count-<?= $stageSlug ?>"><?= count($deals) ?></span>
+          </div>
+          <div class="stage-total" id="total-<?= $stageSlug ?>">
+            Rp <?= number_format($data['stageTotals'][$stage], 0, ',', '.') ?>
+          </div>
         </div>
         <div class="kanban-cards" data-stage="<?= htmlspecialchars($stage) ?>">
           <?php foreach ($deals as $deal): ?>
-            <div class="kanban-card" data-id="<?= $deal->deal_id ?>" draggable="<?= can('update', 'deals') ? 'true' : 'false' ?>">
+            <div class="kanban-card" data-id="<?= $deal->deal_id ?>" data-value="<?= $deal->value; ?>" draggable="<?= can('update', 'deals') ? 'true' : 'false' ?>">
 
               <a href="<?= BASE_URL; ?>/peluang/detail/<?= $deal->deal_id; ?>" class="view-detail-btn" title="Lihat Detail">
                 <i class="bi bi-eye-fill"></i>
@@ -278,7 +345,15 @@
               <?php endif; ?>
 
               <div class="card-footer-details">
-                <div class="card-owner"><i class="bi bi-person-circle"></i><span><?= htmlspecialchars($deal->owner_name) ?></span></div>
+                <div class="card-owner">
+                  <?php
+                  $ownerPhoto = (!empty($deal->owner_photo) && file_exists(PUBLIC_ROOT . '/uploads/profiles/' . $deal->owner_photo))
+                    ? BASE_URL . '/uploads/profiles/' . $deal->owner_photo
+                    : 'https://placehold.co/100x100/6c757d/white?text=' . substr($deal->owner_name, 0, 1);
+                  ?>
+                  <img src="<?= $ownerPhoto; ?>" alt="<?= htmlspecialchars($deal->owner_name); ?>" class="card-owner-photo">
+                  <span><?= htmlspecialchars($deal->owner_name) ?></span>
+                </div>
                 <div class="card-value">Rp <?= number_format($deal->value, 0, ',', '.') ?></div>
               </div>
 
@@ -299,58 +374,44 @@
     const cards = document.querySelectorAll('.kanban-card[draggable="true"]');
     const columns = document.querySelectorAll('.kanban-cards');
     let draggedCard = null;
-    let isDragging = false;
 
     cards.forEach(card => {
       card.addEventListener('dragstart', (e) => {
-        if (e.target.tagName.toLowerCase() === 'a' || e.target.tagName.toLowerCase() === 'i') {
+        if (e.target.closest('a')) {
           e.preventDefault();
           return;
         }
-        isDragging = true;
         draggedCard = card;
         setTimeout(() => card.classList.add('dragging'), 0);
-        e.dataTransfer.effectAllowed = 'move';
       });
 
       card.addEventListener('dragend', () => {
         if (draggedCard) {
           draggedCard.classList.remove('dragging');
+          draggedCard = null;
         }
-        draggedCard = null;
-        setTimeout(() => {
-          isDragging = false;
-        }, 50);
       });
     });
 
     columns.forEach(column => {
       column.addEventListener('dragover', (e) => {
         e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
         e.currentTarget.classList.add('drag-over');
       });
 
-      column.addEventListener('dragleave', (e) => {
-        e.currentTarget.classList.remove('drag-over');
+      column.addEventListener('dragleave', () => {
+        column.classList.remove('drag-over');
       });
 
       column.addEventListener('drop', (e) => {
         e.preventDefault();
-        const targetColumn = e.currentTarget;
-        targetColumn.classList.remove('drag-over');
-
-        if (draggedCard && targetColumn !== draggedCard.parentElement) {
+        column.classList.remove('drag-over');
+        if (draggedCard) {
           const originalColumn = draggedCard.parentElement;
-          targetColumn.prepend(draggedCard);
-
-          updateDealStage(
-            draggedCard.dataset.id,
-            targetColumn.dataset.stage,
-            originalColumn,
-            draggedCard
-          );
+          column.prepend(draggedCard);
+          updateDealStage(draggedCard.dataset.id, column.dataset.stage, originalColumn, draggedCard);
           updateCardCounts();
+          updateColumnTotals(); // Panggil fungsi baru
         }
       });
     });
@@ -373,11 +434,13 @@
           if (!data.success) {
             originalColumn.appendChild(cardElement);
             updateCardCounts();
+            updateColumnTotals(); // Kembalikan total jika gagal
           }
         })
         .catch(() => {
           originalColumn.appendChild(cardElement);
           updateCardCounts();
+          updateColumnTotals(); // Kembalikan total jika error
         });
     }
 
@@ -387,6 +450,22 @@
         const countElement = document.getElementById(`count-${stageSlug}`);
         if (countElement) {
           countElement.innerText = column.querySelectorAll('.kanban-card').length;
+        }
+      });
+    }
+
+    // FUNGSI BARU UNTUK MENGHITUNG ULANG TOTAL NILAI
+    function updateColumnTotals() {
+      columns.forEach(column => {
+        let totalValue = 0;
+        column.querySelectorAll('.kanban-card').forEach(card => {
+          totalValue += parseFloat(card.dataset.value) || 0;
+        });
+
+        const stageSlug = column.dataset.stage.replace(/ /g, '-').toLowerCase();
+        const totalElement = document.getElementById(`total-${stageSlug}`);
+        if (totalElement) {
+          totalElement.textContent = `Rp ${new Intl.NumberFormat('id-ID').format(totalValue)}`;
         }
       });
     }

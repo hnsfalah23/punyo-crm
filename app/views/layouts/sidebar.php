@@ -25,7 +25,7 @@
     <?php endif; ?>
 
     <?php if (can('read', 'activities')) : ?>
-      <li><a href="<?= BASE_URL; ?>/activities" class="list-group-item list-group-item-action <?= isActive('activities'); ?>" title="Aktivitas"><i class="bi bi-clock-history"></i><span class="menu-text">Aktivitas</span></a></li>
+      <li><a href="<?= BASE_URL; ?>/aktivitas" class="list-group-item list-group-item-action <?= isActive('aktivitas'); ?>" title="Aktivitas"><i class="bi bi-clock-history"></i><span class="menu-text">Aktivitas</span></a></li>
     <?php endif; ?>
 
     <?php if (can('read', 'reports')) : ?>
@@ -36,14 +36,14 @@
     <?php endif; ?>
 
     <?php if (can('read', 'users') || can('read', 'products') || can('read', 'permissions')) : ?>
-      <li class="has-dropdown <?= (isActive('users') || isActive('products') || isActive('permissions')) ? 'open' : ''; ?>">
+      <li class="has-dropdown <?= (isActive('pengguna') || isActive('produk') || isActive('permissions')) ? 'open' : ''; ?>">
         <a href="#" class="list-group-item list-group-item-action" title="Pengaturan"><i class="bi bi-gear-fill"></i><span class="menu-text">Pengaturan</span><i class="bi bi-chevron-right dropdown-arrow"></i></a>
         <ul class="submenu">
           <?php if (can('read', 'products')) : ?>
-            <li><a href="<?= BASE_URL; ?>/products" class="<?= isActive('products') ? 'active' : ''; ?>">Manajemen Produk</a></li>
+            <li><a href="<?= BASE_URL; ?>/produk" class="<?= isActive('produk') ? 'active' : ''; ?>">Manajemen Produk</a></li>
           <?php endif; ?>
           <?php if (can('read', 'users')) : ?>
-            <li><a href="<?= BASE_URL; ?>/users" class="<?= isActive('users') ? 'active' : ''; ?>">Manajemen Pengguna</a></li>
+            <li><a href="<?= BASE_URL; ?>/pengguna" class="<?= isActive('pengguna') ? 'active' : ''; ?>">Manajemen Pengguna</a></li>
           <?php endif; ?>
           <?php if (can('read', 'permissions')) : ?>
             <li><a href="<?= BASE_URL; ?>/permissions" class="<?= isActive('permissions') ? 'active' : ''; ?>">Hak Akses</a></li>

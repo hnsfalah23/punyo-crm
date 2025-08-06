@@ -1,22 +1,78 @@
+<style>
+  /* Kustomisasi warna badge tahapan */
+  .badge-stage {
+    padding: 0.5em 0.75em;
+    font-weight: 600;
+  }
+
+  .badge-stage-analisis-kebutuhan {
+    background-color: #cffafe;
+    color: #0891b2;
+  }
+
+  .badge-stage-proposal {
+    background-color: #dbeafe;
+    color: #2563eb;
+  }
+
+  .badge-stage-negosiasi {
+    background-color: #fef3c7;
+    color: #d97706;
+  }
+
+  .badge-stage-menang {
+    background-color: #dcfce7;
+    color: #16a34a;
+  }
+
+  .badge-stage-kalah {
+    background-color: #fee2e2;
+    color: #dc2626;
+  }
+
+  .table-hover tbody tr {
+    transition: background-color 0.2s ease-in-out;
+  }
+
+  .table-hover tbody tr:hover {
+    background-color: #f8f9fa;
+  }
+
+  .action-btn {
+    width: 35px;
+    height: 35px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    margin: 0 2px;
+    transition: all 0.2s ease;
+  }
+
+  .action-btn:hover {
+    transform: translateY(-2px);
+  }
+</style>
+
 <div class="container-fluid px-4">
   <div data-aos="fade-up">
-    <h1 class="mt-4">Tambah Kesepakatan Baru</h1>
+    <h1 class="mt-4">Tambah Peluang Baru</h1>
     <ol class="breadcrumb mb-4">
       <li class="breadcrumb-item"><a href="<?= BASE_URL; ?>/dashboard">Dashboard</a></li>
-      <li class="breadcrumb-item"><a href="<?= BASE_URL; ?>/deals">Kesepakatan</a></li>
+      <li class="breadcrumb-item"><a href="<?= BASE_URL; ?>/peluang">Peluang</a></li>
       <li class="breadcrumb-item active">Tambah</li>
     </ol>
   </div>
 
-  <form action="<?= BASE_URL; ?>/deals/add" method="POST" id="deal-form">
+  <form action="<?= BASE_URL; ?>/peluang/add" method="POST" id="deal-form">
     <div class="row">
       <div class="col-lg-7">
         <div class="card mb-4" data-aos="fade-up" data-aos-delay="100">
           <div class="card-header"><i class="bi bi-info-circle-fill me-2"></i>Detail Utama</div>
           <div class="card-body">
             <div class="form-floating mb-3">
-              <input type="text" class="form-control <?= (!empty($data['name_err'])) ? 'is-invalid' : ''; ?>" id="name" name="name" placeholder="Nama Kesepakatan" value="<?= $data['name']; ?>" required>
-              <label for="name">Nama Kesepakatan</label>
+              <input type="text" class="form-control <?= (!empty($data['name_err'])) ? 'is-invalid' : ''; ?>" id="name" name="name" placeholder="Nama Peluang" value="<?= $data['name']; ?>" required>
+              <label for="name">Nama Peluang</label>
               <span class="invalid-feedback"><?= $data['name_err']; ?></span>
             </div>
             <div class="form-floating mb-3">
@@ -61,7 +117,7 @@
           <div class="card-body">
             <div class="form-floating mb-3">
               <input type="text" class="form-control bg-light" name="value" id="deal-value" value="0" readonly>
-              <label for="deal-value">Nilai Total Kesepakatan (Rp)</label>
+              <label for="deal-value">Nilai Total Peluang (Rp)</label>
             </div>
             <hr>
             <div class="mb-2">
@@ -101,8 +157,8 @@
       </div>
     </div>
     <div class="d-flex justify-content-end mt-3" data-aos="fade-up" data-aos-delay="400">
-      <a href="<?= BASE_URL; ?>/deals" class="btn btn-secondary me-2">Batal</a>
-      <button type="submit" class="btn btn-primary"><i class="bi bi-save me-2"></i>Simpan Kesepakatan</button>
+      <a href="<?= BASE_URL; ?>/peluang" class="btn btn-secondary me-2">Batal</a>
+      <button type="submit" class="btn btn-primary"><i class="bi bi-save me-2"></i>Simpan Peluang</button>
     </div>
   </form>
 </div>
@@ -117,9 +173,8 @@
     const dealValueInput = document.getElementById('deal-value');
     const emptyCartRow = document.getElementById('empty-cart-row');
 
-    let productsData = []; // Untuk menyimpan data produk dari fetch
+    let productsData = [];
 
-    // 1. Fetch produk saat kategori dipilih
     categorySelect.addEventListener('change', function() {
       const categoryId = this.value;
       productSelect.innerHTML = '<option value="">Memuat...</option>';
@@ -147,7 +202,6 @@
         });
     });
 
-    // 2. Tambah produk ke keranjang
     addProductBtn.addEventListener('click', function() {
       const productId = productSelect.value;
       const quantity = parseInt(document.getElementById('product-quantity').value);
@@ -160,14 +214,11 @@
       const product = productsData.find(p => p.product_id == productId);
       if (!product) return;
 
-      // Cek jika produk sudah ada di keranjang
       if (cartItems.querySelector(`tr[data-product-id="${product.product_id}"]`)) {
-        // Bisa pakai SweetAlert2 jika sudah di-load
         alert('Produk ini sudah ada di keranjang.');
         return;
       }
 
-      // Hapus pesan 'keranjang kosong'
       if (emptyCartRow) emptyCartRow.remove();
 
       const subtotal = product.price * quantity;
@@ -193,13 +244,11 @@
       updateGrandTotal();
     });
 
-    // 3. Event delegation untuk hapus item atau ubah kuantitas
     cartItems.addEventListener('click', function(e) {
       if (e.target.closest('.remove-item-btn')) {
         e.target.closest('tr').remove();
         updateGrandTotal();
 
-        // Tampilkan kembali pesan jika keranjang jadi kosong
         if (cartItems.children.length === 0) {
           cartItems.innerHTML = '<tr id="empty-cart-row"><td colspan="4" class="text-center text-muted py-4">Keranjang masih kosong</td></tr>';
         }
@@ -217,7 +266,6 @@
       }
     });
 
-    // 4. Fungsi untuk menghitung total keseluruhan
     function updateGrandTotal() {
       let total = 0;
       cartItems.querySelectorAll('tr[data-product-id]').forEach(row => {

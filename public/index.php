@@ -2,15 +2,16 @@
 // public/index.php
 
 // Mulai session
-if (!session_id()) {
-  session_start();
-}
+session_start();
 
-// Definisikan konstanta ROOT untuk path absolut ke folder proyek
-define('ROOT', dirname(__DIR__));
+// PERBAIKAN 1: Muat file inisialisasi utama aplikasi Anda.
+// Ganti 'init.php' jika nama file Anda berbeda (misalnya, 'core.php', 'loader.php', dll.).
+// File ini seharusnya yang memuat semua file inti seperti Router.php, Controller.php, dll.
+require_once '../app/init.php';
 
-// Panggil file init (yang akan memuat semua file core)
-require_once ROOT . '/app/init.php';
+// PERBAIKAN 2: Tambahkan definisi konstanta ini.
+// Ini akan membuat path absolut ke folder 'public' Anda.
+define('PUBLIC_ROOT', dirname(__FILE__));
 
-// Jalankan router
-$router = new Router();
+// Inisialisasi Core Library (Router)
+$init = new Router();

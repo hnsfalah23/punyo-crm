@@ -2,7 +2,7 @@
   <h1 class="mt-4">Edit Kesepakatan</h1>
   <ol class="breadcrumb mb-4">
     <li class="breadcrumb-item"><a href="<?= BASE_URL; ?>/dashboard">Dashboard</a></li>
-    <li class="breadcrumb-item"><a href="<?= BASE_URL; ?>/deals">Peluang</a></li>
+    <li class="breadcrumb-item"><a href="<?= BASE_URL; ?>/peluang">Peluang</a></li>
     <li class="breadcrumb-item active">Edit</li>
   </ol>
 
@@ -10,7 +10,7 @@
 
   <div class="row">
     <div class="col-lg-8">
-      <form action="<?= BASE_URL; ?>/deals/edit/<?= $data['id']; ?>" method="POST" id="deal-form">
+      <form action="<?= BASE_URL; ?>/peluang/edit/<?= $data['id']; ?>" method="POST" id="deal-form">
         <div class="card mb-4">
           <div class="card-header"><i class="bi bi-info-circle-fill me-2"></i>Detail Utama</div>
           <div class="card-body">
@@ -170,7 +170,7 @@
         </div>
         <div class="card-footer d-flex justify-content-between align-items-center"><strong class="fs-5">Total:</strong><strong class="fs-5" id="grand-total">Rp 0</strong></div>
       </div>
-      <div class="d-flex justify-content-end mt-3"><a href="<?= BASE_URL; ?>/deals/detail/<?= $data['id']; ?>" class="btn btn-secondary me-2">Batal</a><button type="submit" form="deal-form" class="btn btn-primary"><i class="bi bi-save me-2"></i>Update Kesepakatan</button></div>
+      <div class="d-flex justify-content-end mt-3"><a href="<?= BASE_URL; ?>/peluang/detail/<?= $data['id']; ?>" class="btn btn-secondary me-2">Batal</a><button type="submit" form="deal-form" class="btn btn-primary"><i class="bi bi-save me-2"></i>Update Kesepakatan</button></div>
     </div>
   </div>
 </div>

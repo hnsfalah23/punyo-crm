@@ -25,6 +25,8 @@ class Peluang extends Controller
   private $productModel;
   private $userModel;
   private $proposalModel;
+  private $activityModel;
+
 
   public function __construct()
   {
@@ -38,6 +40,7 @@ class Peluang extends Controller
     $this->productModel = $this->model('Product');
     $this->userModel = $this->model('User');
     $this->proposalModel = $this->model('ProposalModel');
+    $this->activityModel = $this->model('ActivityModel');
   }
 
   private function getUserScope()
@@ -79,6 +82,8 @@ class Peluang extends Controller
     $peluang = $this->peluangModel->getPeluang($params);
     $totalPeluang = $this->peluangModel->getTotalPeluang($params);
     $totalPages = ($params['limit'] > 0) ? ceil($totalPeluang / $params['limit']) : 1;
+    $allPeluangForActivity = $this->peluangModel->getPeluang(['scope_type' => $scope['type'], 'scope_value' => $scope['value']]);
+
 
     $data = [
       'title' => 'Manajemen Peluang',
@@ -89,8 +94,9 @@ class Peluang extends Controller
       'limit' => $params['limit'],
       'search' => $params['search'],
       'stage' => $params['stage'],
+      'all_deals_for_activity' => $allPeluangForActivity
     ];
-    $this->renderView('pages/deals/index', $data);
+    $this->renderView('pages/peluang/index', $data);
   }
 
   public function kanban()
@@ -109,7 +115,7 @@ class Peluang extends Controller
       }
     }
     $data = ['title' => 'Papan Kanban Peluang', 'dealsByStage' => $dealsByStage];
-    $this->renderView('pages/deals/kanban', $data);
+    $this->renderView('pages/peluang/kanban', $data);
   }
 
   public function add()
@@ -159,7 +165,7 @@ class Peluang extends Controller
       $data['title'] = 'Tambah Peluang';
       $data['contacts'] = $this->instansiModel->getAllContactsWithCompanyName();
       $data['categories'] = $this->productModel->getAllCategories();
-      $this->renderView('pages/deals/add', $data);
+      $this->renderView('pages/peluang/add', $data);
     } else {
       $data = [
         'title' => 'Tambah Peluang',
@@ -173,7 +179,7 @@ class Peluang extends Controller
         'name_err' => '',
         'contact_id_err' => ''
       ];
-      $this->renderView('pages/deals/add', $data);
+      $this->renderView('pages/peluang/add', $data);
     }
   }
 
@@ -233,7 +239,7 @@ class Peluang extends Controller
       'requirements_notes' => $peluang->requirements_notes ?? '',
       'proposal' => $this->proposalModel->getProposalByDealId($id),
     ];
-    $this->renderView('pages/deals/edit', $data);
+    $this->renderView('pages/peluang/edit', $data);
   }
 
   public function lengkapi($deal_id)
@@ -282,7 +288,7 @@ class Peluang extends Controller
       'products' => $this->peluangModel->getProductsByPeluangId($id),
       'activities' => $activityModel->getActivitiesByItemId($id, 'deal')
     ];
-    $this->renderView('pages/deals/detail', $data);
+    $this->renderView('pages/peluang/detail', $data);
   }
 
   public function delete($id)

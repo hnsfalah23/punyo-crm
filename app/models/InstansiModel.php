@@ -189,4 +189,27 @@ class InstansiModel
     $this->db->bind(':name', $name);
     return $this->db->single();
   }
+
+  public function getAllContactsWithCompanyName()
+  {
+    $this->db->query('
+            SELECT 
+                ct.*, 
+                c.name as company_name 
+            FROM 
+                contacts as ct
+            LEFT JOIN 
+                companies as c ON ct.company_id = c.company_id
+            ORDER BY 
+                ct.name ASC
+        ');
+    return $this->db->resultSet();
+  }
+
+  public function getContactById($contact_id)
+  {
+    $this->db->query('SELECT * FROM contacts WHERE contact_id = :contact_id');
+    $this->db->bind(':contact_id', $contact_id, PDO::PARAM_INT);
+    return $this->db->single();
+  }
 }

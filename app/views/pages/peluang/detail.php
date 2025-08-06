@@ -5,11 +5,6 @@
     font-weight: 600;
   }
 
-  .badge-stage-kualifikasi {
-    background-color: #e9d5ff;
-    color: #9333ea;
-  }
-
   .badge-stage-analisis-kebutuhan {
     background-color: #cffafe;
     color: #0891b2;
@@ -59,6 +54,33 @@
     margin-left: auto;
     text-align: right;
   }
+
+  /* Timeline Aktivitas */
+  .activity-timeline .activity-item {
+    position: relative;
+    padding-bottom: 2rem;
+    padding-left: 35px;
+    border-left: 2px solid #e9ecef;
+  }
+
+  .activity-timeline .activity-item:last-child {
+    border-left: 2px solid transparent;
+    padding-bottom: 0;
+  }
+
+  .activity-timeline .activity-icon {
+    position: absolute;
+    left: -15px;
+    top: 0;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #fff;
+    border: 2px solid #e9ecef;
+  }
 </style>
 
 <div class="container-fluid px-4">
@@ -66,7 +88,7 @@
     <h1 class="mt-4"><?= htmlspecialchars($data['deal']->name); ?></h1>
     <ol class="breadcrumb mb-4">
       <li class="breadcrumb-item"><a href="<?= BASE_URL; ?>/dashboard">Dashboard</a></li>
-      <li class="breadcrumb-item"><a href="<?= BASE_URL; ?>/deals">Peluang</a></li>
+      <li class="breadcrumb-item"><a href="<?= BASE_URL; ?>/peluang">Peluang</a></li>
       <li class="breadcrumb-item active">Detail</li>
     </ol>
   </div>
@@ -79,7 +101,7 @@
         <div class="card-header d-flex justify-content-between align-items-center">
           <span><i class="bi bi-info-circle-fill me-2"></i>Informasi Utama</span>
           <?php if (can('update', 'deals')): ?>
-            <a href="<?= BASE_URL; ?>/deals/edit/<?= $data['deal']->deal_id; ?>" class="btn btn-warning btn-sm text-white">
+            <a href="<?= BASE_URL; ?>/peluang/edit/<?= $data['deal']->deal_id; ?>" class="btn btn-warning btn-sm text-white">
               <i class="bi bi-pencil-fill me-1"></i> Edit
             </a>
           <?php endif; ?>
@@ -151,39 +173,31 @@
           <?php if (empty($data['activities'])): ?>
             <p class="text-center text-muted py-5">Belum ada aktivitas tercatat.</p>
           <?php else: ?>
-            <?php foreach ($data['activities'] as $activity): ?>
-              <div class="d-flex mb-3 pb-3 border-bottom">
-                <div class="me-3 text-center">
-                  <i class="bi bi-calendar-event fs-2 text-primary"></i>
-                  <div class="text-muted small"><?= date('d M', strtotime($activity->start_time)); ?></div>
-                </div>
-                <div class="w-100">
-                  <div class="d-flex justify-content-between">
-                    <h6 class="mb-0"><?= htmlspecialchars($activity->name); ?> <span class="badge bg-secondary fw-normal"><?= htmlspecialchars($activity->type); ?></span></h6>
-                    <?php if (can('update', 'deals') || can('delete', 'deals')): ?>
+            <div class="activity-timeline">
+              <?php foreach ($data['activities'] as $activity): ?>
+                <div class="activity-item">
+                  <div class="activity-icon"><i class="bi bi-calendar-event"></i></div>
+                  <div class="w-100">
+                    <div class="d-flex justify-content-between">
+                      <h6 class="mb-0"><?= htmlspecialchars($activity->name); ?></h6>
                       <div>
-                        <?php if (can('update', 'deals')): ?>
-                          <button class="btn btn-sm btn-outline-warning border-0 p-1 edit-activity-btn" data-bs-toggle="modal" data-bs-target="#editActivityModal" data-id="<?= $activity->activity_id ?>" data-name="<?= htmlspecialchars($activity->name) ?>" data-type="<?= htmlspecialchars($activity->type) ?>" data-start-date="<?= date('Y-m-d', strtotime($activity->start_time)) ?>" data-start-time="<?= date('H:i', strtotime($activity->start_time)) ?>" data-end-date="<?= $activity->end_time ? date('Y-m-d', strtotime($activity->end_time)) : '' ?>" data-end-time="<?= $activity->end_time ? date('H:i', strtotime($activity->end_time)) : '' ?>" data-description="<?= htmlspecialchars($activity->description) ?>" data-photo="<?= $activity->documentation_photo ? BASE_URL . '/uploads/activities/' . $activity->documentation_photo : '' ?>">
-                            <i class="bi bi-pencil-fill"></i>
-                          </button>
+                        <?php if (can('update', 'activities')): ?>
+                          <button class="btn btn-sm btn-outline-warning border-0 p-1 edit-activity-btn" data-id="<?= $activity->activity_id ?>"><i class="bi bi-pencil-fill"></i></button>
                         <?php endif; ?>
-                        <?php if (can('delete', 'deals')): ?>
-                          <form action="<?= BASE_URL; ?>/activities/delete/<?= $activity->activity_id; ?>" method="post" class="d-inline form-delete" data-item-name="<?= htmlspecialchars($activity->name); ?>">
-                            <input type="hidden" name="redirect_url" value="<?= BASE_URL; ?>/deals/detail/<?= $data['deal']->deal_id; ?>">
-                            <button type="submit" class="btn btn-sm btn-outline-danger border-0 p-1"><i class="bi bi-trash"></i></button>
-                          </form>
+                        <?php if (can('delete', 'activities')): ?>
+                          <button class="btn btn-sm btn-outline-danger border-0 p-1 delete-activity-btn" data-id="<?= $activity->activity_id ?>" data-name="<?= htmlspecialchars($activity->name) ?>"><i class="bi bi-trash"></i></button>
                         <?php endif; ?>
                       </div>
-                    <?php endif; ?>
-                  </div>
-                  <small class="text-muted d-block mb-2">Oleh: <?= htmlspecialchars($activity->owner_name); ?> pada <?= date('H:i', strtotime($activity->start_time)); ?></small>
-                  <div class="p-3 bg-light rounded mt-2">
-                    <?php if (!empty($activity->description)): ?><p class="mb-1 fst-italic">"<?= nl2br(htmlspecialchars($activity->description)); ?>"</p><?php endif; ?>
-                    <?php if ($activity->documentation_photo): ?><?php if (!empty($activity->description)) echo '<hr>'; ?><a href="<?= BASE_URL; ?>/uploads/activities/<?= $activity->documentation_photo; ?>" target="_blank"><img src="<?= BASE_URL; ?>/uploads/activities/<?= $activity->documentation_photo; ?>" alt="Dokumentasi" class="img-fluid rounded mt-2" style="max-height: 150px;"></a><?php endif; ?>
+                    </div>
+                    <small class="text-muted d-block mb-2">Oleh: <?= htmlspecialchars($activity->owner_name); ?> pada <?= date('d M Y, H:i', strtotime($activity->start_time)); ?></small>
+                    <div class="p-3 bg-light rounded mt-2">
+                      <?php if (!empty($activity->description)): ?><p class="mb-1 fst-italic">"<?= nl2br(htmlspecialchars($activity->description)); ?>"</p><?php endif; ?>
+                      <?php if ($activity->documentation_photo): ?><?php if (!empty($activity->description)) echo '<hr>'; ?><a href="<?= BASE_URL; ?>/uploads/activities/<?= $activity->documentation_photo; ?>" target="_blank"><img src="<?= BASE_URL; ?>/uploads/activities/<?= $activity->documentation_photo; ?>" alt="Dokumentasi" class="img-fluid rounded mt-2" style="max-height: 150px;"></a><?php endif; ?>
+                    </div>
                   </div>
                 </div>
-              </div>
-            <?php endforeach; ?>
+              <?php endforeach; ?>
+            </div>
           <?php endif; ?>
         </div>
       </div>
@@ -198,11 +212,10 @@
       <div class="modal-header">
         <h5 class="modal-title">Tambah Aktivitas Baru</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
-      <form action="<?= BASE_URL; ?>/activities/add" method="POST" enctype="multipart/form-data">
+      <form id="addActivityForm" method="POST" enctype="multipart/form-data">
         <div class="modal-body">
           <input type="hidden" name="related_item_id" value="<?= $data['deal']->deal_id; ?>">
           <input type="hidden" name="related_item_type" value="deal">
-          <input type="hidden" name="redirect_url" value="<?= BASE_URL; ?>/deals/detail/<?= $data['deal']->deal_id; ?>">
           <div class="mb-3"><label class="form-label">Nama Aktivitas</label><input type="text" class="form-control" name="name" required></div>
           <div class="mb-3"><label class="form-label">Jenis</label><select name="type" class="form-select" required>
               <option value="Tugas">Tugas</option>
@@ -235,9 +248,8 @@
       </div>
       <form id="editActivityForm" method="POST" enctype="multipart/form-data">
         <div class="modal-body">
-          <input type="hidden" name="redirect_url" value="<?= BASE_URL; ?>/deals/detail/<?= $data['deal']->deal_id; ?>">
-          <div class="mb-3"><label class="form-label">Nama Aktivitas</label><input type="text" id="edit_name" class="form-control" name="name" required></div>
-          <div class="mb-3"><label class="form-label">Jenis</label><select id="edit_type" name="type" class="form-select" required>
+          <div class="mb-3"><label class="form-label">Nama Aktivitas</label><input type="text" id="edit_activity_name" class="form-control" name="name" required></div>
+          <div class="mb-3"><label class="form-label">Jenis</label><select id="edit_activity_type" name="type" class="form-select" required>
               <option value="Tugas">Tugas</option>
               <option value="Panggilan">Panggilan</option>
               <option value="Email">Email</option>
@@ -264,36 +276,133 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', function() {
+    const addActivityModal = new bootstrap.Modal(document.getElementById('addActivityModal'));
+    const editActivityModal = new bootstrap.Modal(document.getElementById('editActivityModal'));
+    const addActivityForm = document.getElementById('addActivityForm');
+    const editActivityForm = document.getElementById('editActivityForm');
+
+    // Handle Tambah Aktivitas
+    addActivityForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      handleAjaxFormSubmit(this, '<?= BASE_URL; ?>/activities/add', 'Aktivitas berhasil ditambahkan.', addActivityModal);
+    });
+
+    // Handle Edit Aktivitas (Membuka Modal)
     document.querySelectorAll('.edit-activity-btn').forEach(button => {
       button.addEventListener('click', function() {
         const id = this.dataset.id;
-        const name = this.dataset.name;
-        const type = this.dataset.type;
-        const startDate = this.dataset.startDate;
-        const startTime = this.dataset.startTime;
-        const endDate = this.dataset.endDate;
-        const endTime = this.dataset.endTime;
-        const description = this.dataset.description;
-        const photoUrl = this.dataset.photo;
+        fetch(`<?= BASE_URL ?>/activities/getActivityJson/${id}`)
+          .then(response => response.json())
+          .then(result => {
+            if (result.success) {
+              const data = result.data;
+              editActivityForm.action = `<?= BASE_URL ?>/activities/edit/${id}`;
+              document.getElementById('edit_activity_name').value = data.name;
+              document.getElementById('edit_activity_type').value = data.type;
+              document.getElementById('edit_start_date').value = data.start_time.split(' ')[0];
+              document.getElementById('edit_start_time').value = data.start_time.split(' ')[1].substring(0, 5);
+              document.getElementById('edit_end_date').value = data.end_time ? data.end_time.split(' ')[0] : '';
+              document.getElementById('edit_end_time').value = data.end_time ? data.end_time.split(' ')[1].substring(0, 5) : '';
+              document.getElementById('edit_description').value = data.description;
 
-        const form = document.getElementById('editActivityForm');
-        form.action = '<?= BASE_URL ?>/activities/edit/' + id;
-
-        document.getElementById('edit_name').value = name;
-        document.getElementById('edit_type').value = type;
-        document.getElementById('edit_start_date').value = startDate;
-        document.getElementById('edit_start_time').value = startTime;
-        document.getElementById('edit_end_date').value = endDate;
-        document.getElementById('edit_end_time').value = endTime;
-        document.getElementById('edit_description').value = description;
-
-        const photoContainer = document.getElementById('current_photo_container');
-        if (photoUrl) {
-          photoContainer.innerHTML = `<p class="mb-1 small">Foto saat ini:</p><img src="${photoUrl}" style="max-height: 100px;" class="img-fluid rounded">`;
-        } else {
-          photoContainer.innerHTML = '';
-        }
+              const photoContainer = document.getElementById('current_photo_container');
+              if (data.documentation_photo) {
+                photoContainer.innerHTML = `<p class="mb-1 small">Foto saat ini:</p><a href="<?= BASE_URL ?>/uploads/activities/${data.documentation_photo}" target="_blank"><img src="<?= BASE_URL ?>/uploads/activities/${data.documentation_photo}" style="max-height: 100px;" class="img-fluid rounded"></a>`;
+              } else {
+                photoContainer.innerHTML = '';
+              }
+              editActivityModal.show();
+            } else {
+              Swal.fire('Error', result.message, 'error');
+            }
+          });
       });
     });
+
+    // Handle Submit Form Edit Aktivitas
+    editActivityForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      handleAjaxFormSubmit(this, this.action, 'Aktivitas berhasil diperbarui.', editActivityModal);
+    });
+
+    // Handle Hapus Aktivitas
+    document.querySelectorAll('.delete-activity-btn').forEach(button => {
+      button.addEventListener('click', function() {
+        const id = this.dataset.id;
+        const name = this.dataset.name;
+        Swal.fire({
+          title: 'Apakah Anda yakin?',
+          text: `Anda akan menghapus aktivitas "${name}".`,
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#d33',
+          confirmButtonText: 'Ya, hapus!'
+        }).then((result) => {
+          if (result.isConfirmed) {
+            fetch(`<?= BASE_URL ?>/activities/delete/${id}`, {
+                method: 'POST'
+              })
+              .then(res => res.json())
+              .then(data => {
+                if (data.success) {
+                  Swal.fire({
+                      icon: 'success',
+                      title: 'Dihapus!',
+                      text: data.message,
+                      timer: 1500,
+                      showConfirmButton: false
+                    })
+                    .then(() => location.reload());
+                } else {
+                  Swal.fire('Gagal!', data.message, 'error');
+                }
+              });
+          }
+        });
+      });
+    });
+
+    // Fungsi helper untuk submit form AJAX
+    function handleAjaxFormSubmit(form, url, successMessage, modalInstance) {
+      const formData = new FormData(form);
+      const submitButton = form.querySelector('button[type="submit"]');
+
+      submitButton.disabled = true;
+      submitButton.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Menyimpan...`;
+
+      fetch(url, {
+          method: 'POST',
+          body: formData
+        })
+        .then(response => response.json())
+        .then(result => {
+          modalInstance.hide();
+          if (result.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil!',
+                text: successMessage,
+                timer: 2000,
+                showConfirmButton: false
+              })
+              .then(() => location.reload());
+          } else {
+            Swal.fire({
+              icon: 'error',
+              title: 'Gagal',
+              text: result.message
+            });
+          }
+        })
+        .catch(() => Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Tidak dapat terhubung ke server.'
+        }))
+        .finally(() => {
+          submitButton.disabled = false;
+          submitButton.innerHTML = 'Simpan';
+        });
+    }
   });
 </script>

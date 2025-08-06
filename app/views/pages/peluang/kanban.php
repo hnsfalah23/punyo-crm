@@ -15,7 +15,6 @@
     background-color: var(--kanban-bg);
   }
 
-  /* PERBAIKAN UTAMA DI SINI: Menghapus batasan tinggi */
   .kanban-container-wrapper {
     display: flex;
     flex-direction: column;
@@ -23,7 +22,6 @@
     font-family: var(--font-family);
     background-color: var(--kanban-bg);
     min-height: calc(100vh - 57px);
-    /* Memastikan container setidaknya setinggi layar */
   }
 
   .kanban-header {
@@ -52,7 +50,6 @@
     background-color: #f3f4f6;
   }
 
-  /* PERBAIKAN UTAMA DI SINI: Menghapus batasan tinggi */
   .kanban-board {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
@@ -120,13 +117,15 @@
     background-color: #ef4444;
   }
 
-  /* PERBAIKAN UTAMA DI SINI: Menghapus overflow agar tidak ada scroll di dalam kolom */
+  /* PERBAIKAN UTAMA DI SINI */
   .kanban-cards {
-    flex-grow: 1;
     padding: 1rem;
     background-color: #f9fafb;
     min-height: 150px;
-    /* Jaga agar kolom tidak collapse saat kosong */
+    max-height: calc(100vh - 280px);
+    /* Menetapkan tinggi maksimal berdasarkan tinggi layar */
+    overflow-y: auto;
+    /* Scrollbar akan muncul otomatis jika konten melebihi max-height */
   }
 
   .kanban-cards.drag-over {
@@ -263,7 +262,7 @@
           <?php foreach ($deals as $deal): ?>
             <div class="kanban-card" data-id="<?= $deal->deal_id ?>" draggable="<?= can('update', 'deals') ? 'true' : 'false' ?>">
 
-              <a href="<?= BASE_URL; ?>/deals/detail/<?= $deal->deal_id; ?>" class="view-detail-btn" title="Lihat Detail">
+              <a href="<?= BASE_URL; ?>/peluang/detail/<?= $deal->deal_id; ?>" class="view-detail-btn" title="Lihat Detail">
                 <i class="bi bi-eye-fill"></i>
               </a>
 
@@ -343,8 +342,7 @@
 
         if (draggedCard && targetColumn !== draggedCard.parentElement) {
           const originalColumn = draggedCard.parentElement;
-          // **PERUBAHAN POSISI DROP DI SINI**
-          targetColumn.prepend(draggedCard); // Menggunakan prepend() untuk menempatkan di paling atas
+          targetColumn.prepend(draggedCard);
 
           updateDealStage(
             draggedCard.dataset.id,
@@ -358,7 +356,7 @@
     });
 
     function updateDealStage(dealId, newStage, originalColumn, cardElement) {
-      const url = `<?= BASE_URL; ?>/deals/updateStage`;
+      const url = `<?= BASE_URL; ?>/peluang/updateStage`;
       fetch(url, {
           method: 'POST',
           headers: {

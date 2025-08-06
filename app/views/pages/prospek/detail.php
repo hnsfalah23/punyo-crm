@@ -149,9 +149,9 @@
                       <?php if (!empty($activity->description)): ?>
                         <p class="mb-1 fst-italic">"<?= nl2br(htmlspecialchars($activity->description)); ?>"</p>
                       <?php endif; ?>
-                      <?php if ($activity->documentation_photo): ?>
-                        <?php if (!empty($activity->description)) echo '<hr>'; ?>
-                        <a href="<?= BASE_URL; ?>/uploads/activities/<?= $activity->documentation_photo; ?>" target="_blank">
+                      <?php if (!empty($activity->documentation_photo)): ?>
+                        <?php if (!empty($activity->description)) echo '<hr class="my-2">'; ?>
+                        <a href="<?= BASE_URL; ?>/uploads/activities/<?= $activity->documentation_photo; ?>" target="_blank" title="Lihat gambar">
                           <img src="<?= BASE_URL; ?>/uploads/activities/<?= $activity->documentation_photo; ?>" alt="Dokumentasi" class="img-fluid rounded mt-2" style="max-height: 150px;">
                         </a>
                       <?php endif; ?>

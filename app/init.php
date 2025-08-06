@@ -3,10 +3,11 @@
 
 date_default_timezone_set('Asia/Jakarta');
 
-// Definisikan konstanta APPROOT berdasarkan ROOT dari index.php
-define('APPROOT', ROOT . '/app');
+// PERBAIKAN: Definisikan konstanta path inti di sini
+define('APPROOT', dirname(__FILE__)); // Path ke folder 'app'
+define('ROOT', dirname(APPROOT));     // Path ke folder root proyek (punyo-crm)
 
-// Muat file konfigurasi
+// Muat file konfigurasi (sekarang bisa menggunakan ROOT)
 require_once ROOT . '/config/database.php';
 
 // Muat file-file core

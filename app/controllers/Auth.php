@@ -8,8 +8,7 @@ class Auth extends Controller
 
   public function __construct()
   {
-    $this->userModel = $this->model('User');
-    $this->permissionModel = $this->model('PermissionModel');
+    // Tunda inisialisasi model hingga diperlukan agar halaman login GET tidak butuh DB
   }
 
   public function login()
@@ -34,10 +33,14 @@ class Auth extends Controller
 
   public function processLogin()
   {
+    // Inisialisasi model saat diperlukan
+    $this->userModel = $this->model('User');
+    $this->permissionModel = $this->model('PermissionModel');
+
     $data = [
       'title' => 'Login Punyo CRM',
-      'email' => trim($_POST['email']),
-      'password' => trim($_POST['password']),
+      'email' => trim($_POST['email'] ?? ''),
+      'password' => trim($_POST['password'] ?? ''),
       'error' => ''
     ];
 
@@ -49,7 +52,15 @@ class Auth extends Controller
       return;
     }
 
-    $user = $this->userModel->login($data['email'], $data['password']);
+    try {
+      $user = $this->userModel->login($data['email'], $data['password']);
+    } catch (Exception $e) {
+      $data['error'] = 'Terjadi kesalahan koneksi database. Coba lagi nanti.';
+      $this->view('layouts/header', $data);
+      $this->view('pages/login', $data);
+      $this->view('layouts/footer');
+      return;
+    }
 
     if ($user) {
       $this->createUserSession($user);
@@ -68,6 +79,11 @@ class Auth extends Controller
     $_SESSION['user_name'] = $user->name;
     $_SESSION['user_role_id'] = $user->role_id;
     $_SESSION['user_photo'] = $user->profile_picture;
+
+    // Pastikan permissionModel tersedia
+    if (!$this->permissionModel) {
+      $this->permissionModel = $this->model('PermissionModel');
+    }
 
     $permissions = $this->permissionModel->getPermissionsByRoleId($user->role_id);
     $allMenus = $this->permissionModel->getAllMenus();

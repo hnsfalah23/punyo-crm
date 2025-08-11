@@ -3,11 +3,15 @@
 
 date_default_timezone_set('Asia/Jakarta');
 
-// PERBAIKAN: Definisikan konstanta path inti di sini
-define('APPROOT', dirname(__FILE__)); // Path ke folder 'app'
-define('ROOT', dirname(APPROOT));     // Path ke folder root proyek (punyo-crm)
+// Definisikan konstanta path inti
+if (!defined('APPROOT')) {
+  define('APPROOT', __DIR__); // Path ke folder 'app'
+}
+if (!defined('ROOT')) {
+  define('ROOT', dirname(APPROOT)); // Path ke root proyek
+}
 
-// Muat file konfigurasi (sekarang bisa menggunakan ROOT)
+// Muat file konfigurasi
 require_once ROOT . '/config/database.php';
 
 // Muat file-file core
@@ -18,5 +22,5 @@ require_once APPROOT . '/core/Database.php';
 // Muat helper
 require_once APPROOT . '/helpers/session_helper.php';
 require_once APPROOT . '/helpers/auth_helper.php';
-require_once APPROOT . '/helpers/url_helper.php'; // Pastikan baris ini ada
+require_once APPROOT . '/helpers/url_helper.php';
 require_once APPROOT . '/helpers/format_helper.php';

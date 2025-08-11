@@ -7,29 +7,47 @@ class Router
   protected $currentMethod = 'index';
   protected $params = [];
 
+  private $aliases = [
+    'produk' => 'Products',
+    'pengguna' => 'Users',
+    'aktivitas' => 'Activities',
+    'peluang' => 'Peluang',
+    'prospek' => 'Prospek',
+    'instansi' => 'Instansi',
+    'reports' => 'Reports',
+    'targets' => 'Targets',
+    'permissions' => 'Permissions',
+    'auth' => 'Auth',
+    'dashboard' => 'Dashboard'
+  ];
+
   public function __construct()
   {
     $url = $this->getUrl();
 
     // Cek controller dari URL
-    if (isset($url[0])) {
-      // Ubah huruf pertama menjadi kapital, contoh: 'prospek' -> 'Prospek'
-      $controllerName = ucwords($url[0]);
-      if (file_exists('../app/controllers/' . $controllerName . '.php')) {
+    if (isset($url[0]) && $url[0] !== '') {
+      $first = $url[0];
+      $controllerName = $this->aliases[$first] ?? ucwords($first);
+      if (file_exists(APPROOT . '/controllers/' . $controllerName . '.php')) {
         $this->currentController = $controllerName;
         unset($url[0]);
+      } else {
+        return $this->render404();
       }
     }
 
     // Muat controller
-    require_once '../app/controllers/' . $this->currentController . '.php';
+    require_once APPROOT . '/controllers/' . $this->currentController . '.php';
     $this->currentController = new $this->currentController;
 
     // Cek method dari URL
-    if (isset($url[1])) {
+    if (isset($url[1]) && $url[1] !== '') {
       if (method_exists($this->currentController, $url[1])) {
         $this->currentMethod = $url[1];
         unset($url[1]);
+      } else {
+        return $this->render404();
       }
     }
 
@@ -38,6 +56,13 @@ class Router
 
     // Panggil controller, method, dengan parameter
     call_user_func_array([$this->currentController, $this->currentMethod], $this->params);
+  }
+
+  private function render404()
+  {
+    http_response_code(404);
+    echo '404 Not Found';
+    exit;
   }
 
   public function getUrl()

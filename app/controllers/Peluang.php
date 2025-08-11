@@ -1,7 +1,7 @@
 <?php
 // app/controllers/Peluang.php
 
-require_once('../app/libraries/tcpdf/tcpdf.php');
+require_once APPROOT . '/libraries/tcpdf/tcpdf.php';
 class ProposalPDF extends TCPDF
 {
   public function Footer()

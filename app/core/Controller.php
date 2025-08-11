@@ -15,8 +15,8 @@ class Controller
    */
   public function model($model)
   {
-    // Path yang benar untuk memuat model dari direktori app/models/
-    $modelPath = '../app/models/' . $model . '.php';
+    // Path absolut untuk memuat model dari direktori app/models/
+    $modelPath = APPROOT . '/models/' . $model . '.php';
 
     // Cek apakah file model ada sebelum memuatnya
     if (file_exists($modelPath)) {
@@ -37,8 +37,8 @@ class Controller
    */
   public function view($view, $data = [])
   {
-    // Path ke file view
-    $viewPath = '../app/views/' . $view . '.php';
+    // Path absolut ke file view
+    $viewPath = APPROOT . '/views/' . $view . '.php';
 
     if (file_exists($viewPath)) {
       // Ekstrak data menjadi variabel individual

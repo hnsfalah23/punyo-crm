@@ -4,6 +4,7 @@
 class Database
 {
   private $host = DB_HOST;
+  private $port; // will be set in constructor
   private $user = DB_USER;
   private $pass = DB_PASS;
   private $dbname = DB_NAME;
@@ -14,8 +15,11 @@ class Database
 
   public function __construct()
   {
+    // Determine port (avoid using sockets by specifying host and port)
+    $this->port = defined('DB_PORT') ? DB_PORT : 3306;
+
     // Set DSN
-    $dsn = 'mysql:host=' . $this->host . ';dbname=' . $this->dbname . ';charset=utf8mb4';
+    $dsn = 'mysql:host=' . $this->host . ';port=' . $this->port . ';dbname=' . $this->dbname . ';charset=utf8mb4';
 
     // Set options
     $options = array(

@@ -90,7 +90,7 @@
         </form>
         <div class="d-flex">
           <button type="button" class="btn btn-secondary mb-2 me-2" data-bs-toggle="modal" data-bs-target="#addActivityModal"><i class="bi bi-plus-circle-fill me-2"></i>Tambah Aktivitas</button>
-          <?php if (can('create', 'leads')): ?>
+          <?php if (can('create', 'Prospek')): ?>
             <button type="button" class="btn btn-primary mb-2" data-bs-toggle="modal" data-bs-target="#addLeadModal"><i class="bi bi-plus-lg me-2"></i>Tambah Prospek</button>
           <?php endif; ?>
         </div>
@@ -146,16 +146,16 @@
                     </div>
                   </td>
                   <td class="text-center">
-                    <?php if ($lead->status != 'Kualifikasi' && can('create', 'deals')): ?>
+                    <?php if ($lead->status != 'Kualifikasi' && can('convert', 'Prospek')): ?>
                       <form action="<?= BASE_URL; ?>/prospek/convert/<?= $lead->lead_id; ?>" method="post" class="d-inline form-convert" data-item-name="<?= htmlspecialchars($lead->name); ?>">
                         <button type="submit" class="btn btn-success btn-sm action-btn" title="Konversi"><i class="bi bi-arrow-repeat"></i></button>
                       </form>
                     <?php endif; ?>
                     <a href="<?= BASE_URL; ?>/prospek/detail/<?= $lead->lead_id; ?>" class="btn btn-info btn-sm text-white action-btn" title="Detail"><i class="bi bi-eye-fill"></i></a>
-                    <?php if (can('update', 'leads')): ?>
+                    <?php if (can('update', 'Prospek')): ?>
                       <button type="button" class="btn btn-warning btn-sm text-white action-btn edit-lead-btn" title="Edit" data-id="<?= $lead->lead_id; ?>"><i class="bi bi-pencil-fill"></i></button>
                     <?php endif; ?>
-                    <?php if (can('delete', 'leads')): ?>
+                    <?php if (can('delete', 'Prospek')): ?>
                       <form action="<?= BASE_URL; ?>/prospek/delete/<?= $lead->lead_id; ?>" method="post" class="d-inline form-delete" data-item-name="<?= htmlspecialchars($lead->name); ?>"><button type="submit" class="btn btn-danger btn-sm action-btn" title="Hapus"><i class="bi bi-trash-fill"></i></button></form>
                     <?php endif; ?>
                   </td>
@@ -282,6 +282,7 @@
     const editModal = new bootstrap.Modal(document.getElementById('editLeadModal'));
     const editForm = document.getElementById('editLeadForm');
     const editStatusSelect = document.getElementById('edit_status');
+    const addActivityForm = document.getElementById('addActivityForm');
     let originalStatus = '';
 
     // Fungsi untuk membuka modal edit
@@ -289,7 +290,7 @@
       fetch(`<?= BASE_URL ?>/prospek/getProspekJson/${id}`)
         .then(response => response.json())
         .then(data => {
-          if (data) {
+          if (data && !data.error) {
             editForm.action = `<?= BASE_URL ?>/prospek/edit/${id}`;
             document.getElementById('edit_name').value = data.name || '';
             document.getElementById('edit_company_name').value = data.company_name || '';
@@ -300,8 +301,12 @@
             originalStatus = data.status;
             editModal.show();
           } else {
-            Swal.fire('Error', 'Gagal memuat data prospek.', 'error');
+            Swal.fire('Error', data.error || 'Gagal memuat data prospek.', 'error');
           }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          Swal.fire('Error', 'Gagal memuat data prospek.', 'error');
         });
     };
 
@@ -320,10 +325,18 @@
       const submitAjaxForm = () => {
         const formData = new FormData(editForm);
         const url = editForm.action;
+        const submitButton = editForm.querySelector('button[type="submit"]');
+        const originalButtonText = submitButton.innerHTML;
+
+        submitButton.disabled = true;
+        submitButton.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Menyimpan...`;
 
         fetch(url, {
             method: 'POST',
-            body: formData
+            body: formData,
+            headers: {
+              'X-Requested-With': 'XMLHttpRequest'
+            }
           })
           .then(response => response.json())
           .then(result => {
@@ -350,11 +363,18 @@
               });
             }
           })
-          .catch(() => Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Tidak dapat terhubung ke server.'
-          }));
+          .catch(error => {
+            console.error('Error:', error);
+            Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: 'Tidak dapat terhubung ke server.'
+            });
+          })
+          .finally(() => {
+            submitButton.disabled = false;
+            submitButton.innerHTML = originalButtonText;
+          });
       };
 
       if (newStatus === 'Kualifikasi' && originalStatus !== 'Kualifikasi') {
@@ -419,51 +439,56 @@
     });
 
     // Event listener untuk form tambah aktivitas
-    addActivityForm.addEventListener('submit', function(e) {
-      e.preventDefault();
-      const url = '<?= BASE_URL; ?>/activities/add';
-      const successMessage = 'Aktivitas baru berhasil ditambahkan.';
+    if (addActivityForm) {
+      addActivityForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const url = '<?= BASE_URL; ?>/activities/add';
+        const successMessage = 'Aktivitas baru berhasil ditambahkan.';
 
-      const formData = new FormData(this);
-      const submitButton = this.querySelector('button[type="submit"]');
-      const originalButtonText = submitButton.innerHTML;
-      submitButton.disabled = true;
-      submitButton.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Menyimpan...`;
+        const formData = new FormData(this);
+        const submitButton = this.querySelector('button[type="submit"]');
+        const originalButtonText = submitButton.innerHTML;
+        submitButton.disabled = true;
+        submitButton.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Menyimpan...`;
 
-      fetch(url, {
-          method: 'POST',
-          body: formData
-        })
-        .then(response => response.json())
-        .then(result => {
-          const addModal = bootstrap.Modal.getInstance(document.getElementById('addActivityModal'));
-          addModal.hide();
-          if (result.success) {
-            Swal.fire({
-                icon: 'success',
-                title: 'Berhasil!',
-                text: successMessage,
-                timer: 2000,
-                showConfirmButton: false
-              })
-              .then(() => location.reload());
-          } else {
+        fetch(url, {
+            method: 'POST',
+            body: formData
+          })
+          .then(response => response.json())
+          .then(result => {
+            const addModal = bootstrap.Modal.getInstance(document.getElementById('addActivityModal'));
+            addModal.hide();
+            if (result.success) {
+              Swal.fire({
+                  icon: 'success',
+                  title: 'Berhasil!',
+                  text: successMessage,
+                  timer: 2000,
+                  showConfirmButton: false
+                })
+                .then(() => location.reload());
+            } else {
+              Swal.fire({
+                icon: 'error',
+                title: 'Gagal',
+                text: result.message
+              });
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
             Swal.fire({
               icon: 'error',
-              title: 'Gagal',
-              text: result.message
+              title: 'Error',
+              text: 'Tidak dapat terhubung ke server.'
             });
-          }
-        })
-        .catch(() => Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: 'Tidak dapat terhubung ke server.'
-        }))
-        .finally(() => {
-          submitButton.disabled = false;
-          submitButton.innerHTML = originalButtonText;
-        });
-    });
+          })
+          .finally(() => {
+            submitButton.disabled = false;
+            submitButton.innerHTML = originalButtonText;
+          });
+      });
+    }
   });
 </script>

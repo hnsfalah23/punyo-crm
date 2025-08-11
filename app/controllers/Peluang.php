@@ -204,7 +204,9 @@ class Peluang extends Controller
     if (!can('update', 'deals')) {
       if ($this->isAjaxRequest()) {
         $this->jsonResponse(false, 'Akses tidak diizinkan.', 403);
+        return; // Tambahkan return untuk menghentikan eksekusi
       }
+      flash('deal_message', 'Akses tidak diizinkan.', 'alert alert-danger');
       header('Location: ' . BASE_URL . '/peluang');
       exit;
     }
@@ -214,25 +216,29 @@ class Peluang extends Controller
       $data = [
         'id' => $id,
         'name' => trim($_POST['name']),
-        'value' => $_POST['value'],
-        'stage' => $_POST['stage'],
+        'value' => $_POST['value'] ?? $peluang->value,
+        'stage' => $_POST['stage'] ?? $peluang->stage,
         'contact_id' => $_POST['contact_id'] ?? $peluang->contact_id,
-        'expected_close_date' => !empty($_POST['expected_close_date']) ? $_POST['expected_close_date'] : null,
-        'requirements_notes' => trim($_POST['requirements_notes'] ?? ''),
+        'expected_close_date' => !empty($_POST['expected_close_date']) ? $_POST['expected_close_date'] : $peluang->expected_close_date,
+        'requirements_notes' => trim($_POST['requirements_notes'] ?? $peluang->requirements_notes),
       ];
 
       if ($this->peluangModel->updatePeluang($data)) {
         if ($this->isAjaxRequest()) {
           $this->jsonResponse(true, 'Data peluang berhasil diperbarui.');
+        } else {
+          flash('deal_message', 'Peluang berhasil diupdate.');
+          header('Location: ' . BASE_URL . '/peluang/edit/' . $id);
+          exit;
         }
-        flash('deal_message', 'Peluang berhasil diupdate.');
-        header('Location: ' . BASE_URL . '/peluang/edit/' . $id);
-        exit;
       } else {
         if ($this->isAjaxRequest()) {
           $this->jsonResponse(false, 'Gagal memperbarui data peluang.');
+        } else {
+          flash('deal_message', 'Gagal mengupdate peluang.', 'alert alert-danger');
+          header('Location: ' . BASE_URL . '/peluang/edit/' . $id);
+          exit;
         }
-        flash('deal_message', 'Gagal mengupdate peluang.', 'alert alert-danger');
       }
     }
 
@@ -506,14 +512,10 @@ class Peluang extends Controller
     if (ob_get_level() > 0) ob_end_clean();
     header('Content-Type: application/json');
     http_response_code($httpCode);
-    $response = ['success' => $success, 'message' => $message];
-    if (!empty($data)) {
-      $response['data'] = $data;
-    }
+    $response = ['success' => $success, 'message' => $message, 'data' => $data];
     echo json_encode($response);
     exit;
   }
-
   private function renderView($view, $data = [])
   {
     $this->view('layouts/header', $data);

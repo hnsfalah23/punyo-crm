@@ -46,7 +46,8 @@ class Prospek extends Controller
 
   public function index()
   {
-    if (!can('read', 'leads')) {
+    // Gunakan nama menu yang tepat dari database: "Prospek"
+    if (!can('read', 'Prospek')) {
       flash('dashboard_message', 'Anda tidak memiliki hak akses.', 'alert alert-danger');
       header('Location: ' . BASE_URL . '/dashboard');
       exit;
@@ -81,7 +82,7 @@ class Prospek extends Controller
 
   public function detail($id)
   {
-    if (!can('read', 'leads')) {
+    if (!can('read', 'Prospek')) {
       header('Location: ' . BASE_URL . '/prospek');
       exit;
     }
@@ -100,7 +101,7 @@ class Prospek extends Controller
 
   public function add()
   {
-    if (!can('create', 'leads') || $_SERVER['REQUEST_METHOD'] != 'POST') {
+    if (!can('create', 'Prospek') || $_SERVER['REQUEST_METHOD'] != 'POST') {
       header('Location: ' . BASE_URL . '/prospek');
       exit;
     }
@@ -128,7 +129,7 @@ class Prospek extends Controller
 
   public function edit($id)
   {
-    if (!can('update', 'leads') || $_SERVER['REQUEST_METHOD'] != 'POST') {
+    if (!can('update', 'Prospek') || $_SERVER['REQUEST_METHOD'] != 'POST') {
       $this->jsonResponse(false, 'Akses tidak diizinkan', 403);
     }
 
@@ -166,7 +167,7 @@ class Prospek extends Controller
 
   public function delete($id)
   {
-    if (!can('delete', 'leads') || $_SERVER['REQUEST_METHOD'] != 'POST') {
+    if (!can('delete', 'Prospek') || $_SERVER['REQUEST_METHOD'] != 'POST') {
       header('Location: ' . BASE_URL . '/prospek');
       exit;
     }
@@ -182,7 +183,7 @@ class Prospek extends Controller
   public function getProspekJson($id)
   {
     header('Content-Type: application/json');
-    if (!can('read', 'leads')) {
+    if (!can('read', 'Prospek')) {
       echo json_encode(['error' => 'Akses ditolak']);
       exit;
     }
@@ -192,7 +193,8 @@ class Prospek extends Controller
 
   public function convert($id, $internalCall = false)
   {
-    if (!can('create', 'peluang')) {
+    // Gunakan nama menu yang tepat: "Prospek"
+    if (!can('convert', 'Prospek')) {
       $message = 'Anda tidak memiliki hak akses untuk konversi.';
       if ($internalCall) return ['success' => false, 'message' => $message, 'data' => []];
       flash('prospek_message', $message, 'alert alert-danger');
@@ -217,7 +219,13 @@ class Prospek extends Controller
     }
 
     if ($newCompanyId == 0) {
-      $instansiData = ['name' => $companyName ?: 'Instansi ' . $prospek->name, 'website' => '', 'industry' => '', 'description' => '', 'gmaps_location' => ''];
+      $instansiData = [
+        'name' => $companyName ?: 'Instansi ' . $prospek->name,
+        'website' => '',
+        'industry' => '',
+        'description' => '',
+        'gmaps_location' => ''
+      ];
       $newCompanyId = $this->instansiModel->addInstansi($instansiData);
     }
 
@@ -229,7 +237,13 @@ class Prospek extends Controller
       exit;
     }
 
-    $kontakData = ['name' => $prospek->name, 'email' => $prospek->email, 'phone' => $prospek->phone, 'company_id' => $newCompanyId];
+    $kontakData = [
+      'name' => $prospek->name,
+      'email' => $prospek->email,
+      'phone' => $prospek->phone,
+      'company_id' => $newCompanyId
+    ];
+
     if (!$this->kontakModel->addKontak($kontakData)) {
       $message = 'Gagal membuat kontak saat konversi.';
       if ($internalCall) return ['success' => false, 'message' => $message, 'data' => []];
@@ -237,10 +251,19 @@ class Prospek extends Controller
       header('Location: ' . BASE_URL . '/prospek');
       exit;
     }
+
     $newContact = $this->kontakModel->getLastContactByCompanyId($newCompanyId);
     $newContactId = $newContact ? $newContact->contact_id : 0;
 
-    $dealData = ['name' => 'Peluang dari ' . $prospek->name, 'value' => 0, 'owner_id' => $prospek->owner_id, 'company_id' => $newCompanyId, 'contact_id' => $newContactId, 'stage' => 'Analisis Kebutuhan'];
+    $dealData = [
+      'name' => 'Peluang dari ' . $prospek->name,
+      'value' => 0,
+      'owner_id' => $prospek->owner_id,
+      'company_id' => $newCompanyId,
+      'contact_id' => $newContactId,
+      'stage' => 'Analisis Kebutuhan'
+    ];
+
     $newDealId = $this->peluangModel->addPeluang($dealData);
 
     if ($newDealId) {

@@ -50,7 +50,7 @@
             </div>
           </div>
         </form>
-        <?php if (can('create', 'users')): ?>
+        <?php if (can('create', 'Manajemen Pengguna')): ?>
           <a href="<?= BASE_URL; ?>/users/add" class="btn btn-primary mb-2"><i class="bi bi-plus-lg me-2"></i>Tambah Pengguna</a>
         <?php endif; ?>
       </div>
@@ -77,10 +77,10 @@
                   <td><?= htmlspecialchars($user->email); ?></td>
                   <td><span class="badge bg-success"><?= htmlspecialchars($user->role_name); ?></span></td>
                   <td class="text-center">
-                    <?php if (can('update', 'users')): ?>
+                    <?php if (can('update', 'Manajemen Pengguna')): ?>
                       <a href="<?= BASE_URL; ?>/users/edit/<?= $user->user_id; ?>" class="btn btn-warning btn-sm text-white action-btn" title="Edit"><i class="bi bi-pencil-fill"></i></a>
                     <?php endif; ?>
-                    <?php if (can('delete', 'users')): ?>
+                    <?php if (can('delete', 'Manajemen Pengguna')): ?>
                       <form action="<?= BASE_URL; ?>/users/delete/<?= $user->user_id; ?>" method="post" class="d-inline form-delete" data-item-name="<?= htmlspecialchars($user->name); ?>">
                         <button type="submit" class="btn btn-danger btn-sm action-btn" title="Hapus"><i class="bi bi-trash-fill"></i></button>
                       </form>
@@ -95,3 +95,29 @@
     </div>
   </div>
 </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Event listener untuk form hapus
+    document.querySelectorAll('.form-delete').forEach(form => {
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const itemName = form.getAttribute('data-item-name');
+        Swal.fire({
+          title: 'Apakah Anda yakin?',
+          text: `Anda akan menghapus "${itemName}".`,
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#d33',
+          cancelButtonColor: '#6c757d',
+          confirmButtonText: 'Ya, hapus!',
+          cancelButtonText: 'Batal'
+        }).then((result) => {
+          if (result.isConfirmed) {
+            form.submit();
+          }
+        });
+      });
+    });
+  });
+</script>

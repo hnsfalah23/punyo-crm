@@ -48,7 +48,7 @@
             <?php foreach ($data['categories'] as $category): ?>
               <li class="list-group-item d-flex justify-content-between align-items-center">
                 <?= htmlspecialchars($category->category_name); ?>
-                <?php if (can('delete', 'products')): ?>
+                <?php if (can('delete', 'Manajemen Produk')): ?>
                   <form action="<?= BASE_URL; ?>/products/deleteCategory/<?= $category->category_id; ?>" method="post" class="d-inline form-delete" data-item-name="<?= htmlspecialchars($category->category_name); ?>">
                     <button type="submit" class="btn btn-sm btn-outline-danger border-0 p-1" title="Hapus Kategori"><i class="bi bi-trash"></i></button>
                   </form>
@@ -56,7 +56,7 @@
               </li>
             <?php endforeach; ?>
           </ul>
-          <?php if (can('create', 'products')): ?>
+          <?php if (can('create', 'Manajemen Produk')): ?>
             <hr>
             <form action="<?= BASE_URL; ?>/products/addCategory" method="POST">
               <label class="form-label small">Tambah Kategori Baru</label>
@@ -74,7 +74,7 @@
       <div class="card mb-4" data-aos="fade-up" data-aos-delay="200">
         <div class="card-header d-flex justify-content-between align-items-center">
           <span><i class="bi bi-box-seam-fill me-1"></i> Data Produk</span>
-          <?php if (can('create', 'products')): ?>
+          <?php if (can('create', 'Manajemen Produk')): ?>
             <a href="<?= BASE_URL; ?>/products/add" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i> Tambah Produk</a>
           <?php endif; ?>
         </div>
@@ -101,10 +101,10 @@
                       <td><span class="badge bg-secondary fw-normal"><?= htmlspecialchars($product->category_name); ?></span></td>
                       <td><?= number_format($product->price, 0, ',', '.'); ?></td>
                       <td class="text-center">
-                        <?php if (can('update', 'products')): ?>
+                        <?php if (can('update', 'Manajemen Produk')): ?>
                           <a href="<?= BASE_URL; ?>/products/edit/<?= $product->product_id; ?>" class="btn btn-warning btn-sm text-white action-btn" title="Edit"><i class="bi bi-pencil-fill"></i></a>
                         <?php endif; ?>
-                        <?php if (can('delete', 'products')): ?>
+                        <?php if (can('delete', 'Manajemen Produk')): ?>
                           <form action="<?= BASE_URL; ?>/products/delete/<?= $product->product_id; ?>" method="post" class="d-inline form-delete" data-item-name="<?= htmlspecialchars($product->name); ?>">
                             <button type="submit" class="btn btn-danger btn-sm action-btn" title="Hapus"><i class="bi bi-trash-fill"></i></button>
                           </form>
@@ -121,3 +121,29 @@
     </div>
   </div>
 </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Event listener untuk form hapus
+    document.querySelectorAll('.form-delete').forEach(form => {
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const itemName = form.getAttribute('data-item-name');
+        Swal.fire({
+          title: 'Apakah Anda yakin?',
+          text: `Anda akan menghapus "${itemName}".`,
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#d33',
+          cancelButtonColor: '#6c757d',
+          confirmButtonText: 'Ya, hapus!',
+          cancelButtonText: 'Batal'
+        }).then((result) => {
+          if (result.isConfirmed) {
+            form.submit();
+          }
+        });
+      });
+    });
+  });
+</script>

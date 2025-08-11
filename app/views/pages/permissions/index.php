@@ -32,6 +32,7 @@
                 <th class="text-center">Tambah</th>
                 <th class="text-center">Edit</th>
                 <th class="text-center">Hapus</th>
+                <th class="text-center">Konversi</th>
               </tr>
             </thead>
             <tbody id="permissions-tbody">
@@ -42,6 +43,14 @@
                   <td class="text-center"><input class="form-check-input" type="checkbox" name="permissions[<?= $menu->menu_id ?>][create]" value="1"></td>
                   <td class="text-center"><input class="form-check-input" type="checkbox" name="permissions[<?= $menu->menu_id ?>][update]" value="1"></td>
                   <td class="text-center"><input class="form-check-input" type="checkbox" name="permissions[<?= $menu->menu_id ?>][delete]" value="1"></td>
+                  <td class="text-center">
+                    <!-- Hanya tampilkan checkbox konversi untuk menu prospek -->
+                    <?php if (strtolower($menu->menu_name) === 'prospek' || strtolower($menu->menu_name) === 'leads'): ?>
+                      <input class="form-check-input" type="checkbox" name="permissions[<?= $menu->menu_id ?>][convert]" value="1">
+                    <?php else: ?>
+                      <span class="text-muted">-</span>
+                    <?php endif; ?>
+                  </td>
                 </tr>
               <?php endforeach; ?>
             </tbody>

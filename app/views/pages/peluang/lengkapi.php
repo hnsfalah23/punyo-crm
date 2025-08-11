@@ -128,7 +128,10 @@
         const formData = new FormData(form);
         const response = await fetch(url, {
           method: 'POST',
-          body: formData
+          body: formData,
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest' // Tambahkan header ini
+          }
         });
         const result = await response.json();
 

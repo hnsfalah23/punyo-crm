@@ -12,6 +12,106 @@ class Auth extends Controller
     $this->permissionModel = $this->model('PermissionModel');
   }
 
+  public function index()
+  {
+    // Arahkan ke halaman login sebagai default
+    header('Location: ' . BASE_URL . '/auth/login');
+    exit;
+  }
+
+  public function register()
+  {
+    // Cek jika sudah login, arahkan ke dashboard
+    if (isLoggedIn()) {
+      header('Location: ' . BASE_URL . '/dashboard');
+      exit;
+    }
+
+    // Cek jika ada request POST
+    if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+      $this->processRegistration();
+    } else {
+      // Tampilkan halaman register dengan data kosong
+      $data = [
+        'title' => 'Register Punyo CRM',
+        'name' => '',
+        'email' => '',
+        'password' => '',
+        'confirm_password' => '',
+        'name_err' => '',
+        'email_err' => '',
+        'password_err' => '',
+        'confirm_password_err' => ''
+      ];
+      $this->view('layouts/header', $data);
+      $this->view('pages/register', $data);
+      $this->view('layouts/footer');
+    }
+  }
+
+  public function processRegistration()
+  {
+    // Sanitasi data akan dilakukan per-variabel
+
+    $data = [
+      'title' => 'Register Punyo CRM',
+      'name' => trim($_POST['name']),
+      'email' => trim($_POST['email']),
+      'password' => trim($_POST['password']),
+      'confirm_password' => trim($_POST['confirm_password']),
+      'name_err' => '',
+      'email_err' => '',
+      'password_err' => '',
+      'confirm_password_err' => ''
+    ];
+
+    // Validasi Data
+    if (empty($data['name'])) {
+      $data['name_err'] = 'Nama tidak boleh kosong';
+    }
+
+    if (empty($data['email'])) {
+      $data['email_err'] = 'Email tidak boleh kosong';
+    } else {
+      if ($this->userModel->findUserByEmail($data['email'])) {
+        $data['email_err'] = 'Email sudah terdaftar';
+      }
+    }
+
+    if (empty($data['password'])) {
+      $data['password_err'] = 'Password tidak boleh kosong';
+    } elseif (strlen($data['password']) < 6) {
+      $data['password_err'] = 'Password minimal harus 6 karakter';
+    }
+
+    if (empty($data['confirm_password'])) {
+      $data['confirm_password_err'] = 'Konfirmasi password tidak boleh kosong';
+    } else {
+      if ($data['password'] != $data['confirm_password']) {
+        $data['confirm_password_err'] = 'Password tidak cocok';
+      }
+    }
+
+    // Cek apakah ada error
+    if (empty($data['name_err']) && empty($data['email_err']) && empty($data['password_err']) && empty($data['confirm_password_err'])) {
+      // Hash Password
+      $data['password'] = password_hash($data['password'], PASSWORD_DEFAULT);
+
+      // Simpan User ke Database
+      if ($this->userModel->register($data)) {
+        header('Location: ' . BASE_URL . '/auth/login');
+        exit;
+      } else {
+        die('Terjadi kesalahan saat menyimpan data.');
+      }
+    } else {
+      // Jika ada error, tampilkan kembali form dengan error
+      $this->view('layouts/header', $data);
+      $this->view('pages/register', $data);
+      $this->view('layouts/footer');
+    }
+  }
+
   public function login()
   {
     if (isLoggedIn()) {

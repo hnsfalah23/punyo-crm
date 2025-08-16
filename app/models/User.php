@@ -1,5 +1,5 @@
 <?php
-// app/models/UserModel.php
+// app/models/User.php
 
 class User
 {
@@ -31,6 +31,26 @@ class User
     $this->db->bind(':email', $email);
     $row = $this->db->single();
     return ($this->db->rowCount() > 0) ? $row : false;
+  }
+
+  public function register($data)
+  {
+    // Query untuk memasukkan user baru
+    $this->db->query('INSERT INTO users (name, email, password, role_id) VALUES (:name, :email, :password, :role_id)');
+
+    // Bind values
+    $this->db->bind(':name', $data['name']);
+    $this->db->bind(':email', $data['email']);
+    $this->db->bind(':password', $data['password']);
+    // Atur role_id default untuk setiap user yang mendaftar
+    $this->db->bind(':role_id', 3);
+
+    // Execute
+    if ($this->db->execute()) {
+      return true;
+    } else {
+      return false;
+    }
   }
 
   public function getAllUsersWithRoles()

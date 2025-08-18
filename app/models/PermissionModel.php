@@ -10,6 +10,22 @@ class PermissionModel
     $this->db = new Database;
   }
 
+  // TAMBAHKAN METHOD BARU INI
+  public function getRoles()
+  {
+    $this->db->query("SELECT * FROM roles ORDER BY role_id ASC");
+    return $this->db->resultSet();
+  }
+  // AKHIR DARI METHOD BARU
+
+
+  public function getAllRoles()
+  {
+    $this->db->query('SELECT * FROM roles ORDER BY role_id ASC');
+    return $this->db->resultSet();
+  }
+
+
   public function getAllMenus()
   {
     $this->db->query('SELECT * FROM menus ORDER BY menu_order ASC');

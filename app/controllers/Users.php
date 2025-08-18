@@ -4,29 +4,28 @@
 class Users extends Controller
 {
   private $userModel;
+  private $permissionModel;
+
 
   public function __construct()
   {
-    // Pengecekan baru yang dinamis
     if (!isLoggedIn()) {
       header('Location: ' . BASE_URL . '/auth/login');
       exit;
     }
+
+    $this->userModel = $this->model('User');
+    $this->permissionModel = $this->model('PermissionModel');
+  }
+
+  public function index()
+  {
     if (!can('read', 'users')) {
       flash('dashboard_message', 'Anda tidak memiliki hak akses ke halaman tersebut.', 'alert alert-danger');
       header('Location: ' . BASE_URL . '/dashboard');
       exit;
     }
-    $this->userModel = $this->model('User');
-  }
-  
-  public function index()
-  {
-    if (!can('read', 'users')) {
-      flash('user_message', 'Anda tidak memiliki izin untuk melihat pengguna.', 'alert alert-danger');
-      header('Location: ' . BASE_URL . '/dashboard');
-      exit;
-    }
+
     $users = $this->userModel->getAllUsersWithRoles();
     $data = [
       'title' => 'Manajemen Pengguna',
@@ -44,14 +43,13 @@ class Users extends Controller
     }
 
     if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-      // Proses form
       $data = [
         'name' => trim($_POST['name']),
         'email' => trim($_POST['email']),
         'password' => trim($_POST['password']),
         'confirm_password' => trim($_POST['confirm_password']),
         'role_id' => $_POST['role_id'],
-        'roles' => $this->userModel->getAllRoles(),
+        'roles' => $this->permissionModel->getRoles(),
         'name_err' => '',
         'email_err' => '',
         'password_err' => '',
@@ -59,7 +57,6 @@ class Users extends Controller
         'role_id_err' => ''
       ];
 
-      // Validasi (logika validasi tetap sama)
       if (empty($data['name'])) $data['name_err'] = 'Nama tidak boleh kosong.';
       if (empty($data['email'])) $data['email_err'] = 'Email tidak boleh kosong.';
       elseif ($this->userModel->findUserByEmail($data['email'])) $data['email_err'] = 'Email sudah terdaftar.';
@@ -72,7 +69,7 @@ class Users extends Controller
       if (empty($data['name_err']) && empty($data['email_err']) && empty($data['password_err']) && empty($data['confirm_password_err']) && empty($data['role_id_err'])) {
         $data['password'] = password_hash($data['password'], PASSWORD_DEFAULT);
         if ($this->userModel->addUser($data)) {
-          flash('user_message', 'Pengguna baru berhasil ditambahkan.', 'success');
+          flash('user_message', 'Pengguna baru berhasil ditambahkan.', 'alert alert-success');
           header('Location: ' . BASE_URL . '/users');
           exit;
         } else {
@@ -90,7 +87,7 @@ class Users extends Controller
         'password' => '',
         'confirm_password' => '',
         'role_id' => '',
-        'roles' => $this->userModel->getAllRoles(),
+        'roles' => $this->permissionModel->getRoles(),
         'name_err' => '',
         'email_err' => '',
         'password_err' => '',
@@ -110,7 +107,6 @@ class Users extends Controller
     }
 
     if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-      // Logika proses edit tetap sama
       $user = $this->userModel->getUserById($id);
       $data = [
         'id' => $id,
@@ -118,7 +114,7 @@ class Users extends Controller
         'email' => trim($_POST['email']),
         'password' => trim($_POST['password']),
         'role_id' => $_POST['role_id'],
-        'roles' => $this->userModel->getAllRoles(),
+        'roles' => $this->permissionModel->getRoles(),
         'name_err' => '',
         'email_err' => '',
         'password_err' => '',
@@ -132,9 +128,14 @@ class Users extends Controller
       if (!empty($data['password']) && strlen($data['password']) < 6) $data['password_err'] = 'Password minimal 6 karakter.';
 
       if (empty($data['name_err']) && empty($data['email_err']) && empty($data['password_err']) && empty($data['role_id_err'])) {
-        if (!empty($data['password'])) $data['password'] = password_hash($data['password'], PASSWORD_DEFAULT);
+        if (!empty($data['password'])) {
+          $data['password'] = password_hash($data['password'], PASSWORD_DEFAULT);
+        } else {
+          $data['password'] = null;
+        }
+
         if ($this->userModel->updateUser($data)) {
-          flash('user_message', 'Data pengguna berhasil diupdate.', 'success');
+          flash('user_message', 'Data pengguna berhasil diupdate.', 'alert alert-success');
           header('Location: ' . BASE_URL . '/users');
           exit;
         } else {
@@ -145,7 +146,6 @@ class Users extends Controller
         $this->renderView('pages/users/edit', $data);
       }
     } else {
-      // Logika menampilkan form edit tetap sama
       $user = $this->userModel->getUserById($id);
       if (!$user || $user->user_id == $_SESSION['user_id']) {
         header('Location: ' . BASE_URL . '/users');
@@ -157,7 +157,7 @@ class Users extends Controller
         'name' => $user->name,
         'email' => $user->email,
         'role_id' => $user->role_id,
-        'roles' => $this->userModel->getAllRoles(),
+        'roles' => $this->permissionModel->getRoles(),
         'name_err' => '',
         'email_err' => '',
         'password_err' => '',
@@ -177,13 +177,13 @@ class Users extends Controller
 
     if ($_SERVER['REQUEST_METHOD'] == 'POST') {
       if ($id == $_SESSION['user_id']) {
-        flash('user_message', 'Anda tidak dapat menghapus akun Anda sendiri.', 'error');
+        flash('user_message', 'Anda tidak dapat menghapus akun Anda sendiri.', 'alert alert-danger');
         header('Location: ' . BASE_URL . '/users');
         exit;
       }
 
       if ($this->userModel->deleteUser($id)) {
-        flash('user_message', 'Pengguna berhasil dihapus.', 'success');
+        flash('user_message', 'Pengguna berhasil dihapus.', 'alert alert-success');
         header('Location: ' . BASE_URL . '/users');
         exit;
       } else {
@@ -237,8 +237,8 @@ class Users extends Controller
 
       if ($this->userModel->updateProfile($data)) {
         $_SESSION['user_name'] = $data['name'];
-        $_SESSION['user_photo'] = $data['profile_picture']; // Update session foto
-        flash('profile_message', 'Profil berhasil diperbarui.');
+        $_SESSION['user_photo'] = $data['profile_picture'];
+        flash('profile_message', 'Profil berhasil diperbarui.', 'alert alert-success');
         header('Location: ' . BASE_URL . '/users/profile');
         exit;
       } else {

@@ -35,22 +35,12 @@ class User
 
   public function register($data)
   {
-    // Query untuk memasukkan user baru
     $this->db->query('INSERT INTO users (name, email, password, role_id) VALUES (:name, :email, :password, :role_id)');
-
-    // Bind values
     $this->db->bind(':name', $data['name']);
     $this->db->bind(':email', $data['email']);
     $this->db->bind(':password', $data['password']);
-    // Atur role_id default untuk setiap user yang mendaftar
     $this->db->bind(':role_id', 3);
-
-    // Execute
-    if ($this->db->execute()) {
-      return true;
-    } else {
-      return false;
-    }
+    return $this->db->execute();
   }
 
   public function getAllUsersWithRoles()
@@ -64,11 +54,7 @@ class User
     return $this->db->resultSet();
   }
 
-  public function getAllRoles()
-  {
-    $this->db->query('SELECT * FROM roles');
-    return $this->db->resultSet();
-  }
+  // [FIX] Method getAllRoles() DIHAPUS dari sini karena sudah pindah ke PermissionModel.php
 
   public function addUser($data)
   {

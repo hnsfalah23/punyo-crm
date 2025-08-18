@@ -40,7 +40,7 @@ class Permissions extends Controller
       $selected_role = $_GET['role'] ?? 1; // Default Admin
       $data = [
         'title' => 'Manajemen Hak Akses',
-        'roles' => $this->userModel->getAllRoles(),
+        'roles' => $this->permissionModel->getAllRoles(),
         'menus' => $this->permissionModel->getAllMenus(),
         'permissions' => $this->permissionModel->getPermissionsByRoleId($selected_role),
         'selected_role_id' => $selected_role
